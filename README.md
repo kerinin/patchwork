@@ -479,66 +479,113 @@ Every time you apply a patch, Patchwork saves a snapshot. Revert to any previous
 
 ## Technical Architecture
 
-### Local-First
+Patchwork uses a cloud-synced architecture with on-device OCR. Text extraction happens locally on your device (no large model downloads), while documents sync across devices via a lightweight backend.
 
-All processing happens on your machine:
-
-- **Vision model**: Ollama running LLaVA, Llama Vision, or compatible
-- **Storage**: SQLite database + image files
-- **No cloud**: Your manuscripts never leave your computer
-
-### Stack
+### Overview
 
 ```
-┌─────────────────────────────────────────┐
-│            Patchwork UI                 │
-│         (Tauri + SvelteKit)             │
-├─────────────────────────────────────────┤
-│              Core Engine                │
-│               (Rust)                    │
-├──────────────┬──────────────────────────┤
-│   Storage    │    Vision Pipeline       │
-│  (SQLite +   │   (Ollama Client)        │
-│   Images)    │                          │
-└──────────────┴──────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                         CLIENTS                             │
+│                                                             │
+│   iOS App              Android App           Web App        │
+│   ┌─────────┐          ┌─────────┐          ┌─────────┐    │
+│   │ Camera  │          │ Camera  │          │ Import  │    │
+│   │ Apple   │          │ ML Kit  │          │ (drag & │    │
+│   │ Vision  │          │ OCR     │          │  drop)  │    │
+│   └────┬────┘          └────┬────┘          └────┬────┘    │
+│        │                    │                    │          │
+│        └────────────────────┼────────────────────┘          │
+│                             │                               │
+│                             ▼                               │
+│                    ┌─────────────────┐                      │
+│                    │  Sync Engine    │                      │
+│                    │  (offline-first)│                      │
+│                    └────────┬────────┘                      │
+│                             │                               │
+└─────────────────────────────┼───────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                     SUPABASE BACKEND                        │
+│                                                             │
+│   ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │
+│   │  Postgres   │  │   Storage   │  │  Realtime   │        │
+│   │  Database   │  │   (images)  │  │   (sync)    │        │
+│   └─────────────┘  └─────────────┘  └─────────────┘        │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
 ```
+
+### On-Device OCR
+
+Text extraction runs locally using platform APIs:
+
+| Platform | Technology | Notes |
+|----------|------------|-------|
+| iOS | Apple Vision | Built-in, excellent quality, handles handwriting |
+| Android | ML Kit | On-device, ~5MB auto-download |
+| Web | Tesseract.js | WASM-based, runs in browser |
+
+Annotation detection uses a lightweight rules-based system initially, with option to add a small ML model later.
+
+### Backend (Supabase)
+
+- **Postgres**: Stores folders, documents, patches, annotations
+- **Storage**: Original images (S3-compatible)
+- **Realtime**: Sync changes across devices
+- **Auth**: User accounts, row-level security
+
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed data model and API.
+
+### Clients
+
+- **iOS/Android**: Native apps with camera integration
+- **Web**: SvelteKit app for desktop use
+- **Offline-first**: Changes sync when connectivity returns
 
 ---
 
 ## Roadmap
 
-### Phase 1: Inbox
-- [ ] Image import and watch folder
-- [ ] Ollama integration for text extraction
+### Phase 1: Foundation
+- [ ] Supabase project setup (database, storage, auth)
+- [ ] Data model and migrations
+- [ ] Web app scaffolding (SvelteKit)
+- [ ] Basic auth flow
+
+### Phase 2: Inbox
+- [ ] Image upload and OCR (Tesseract.js for web)
+- [ ] Patch review interface
 - [ ] Uncertain region flagging
-- [ ] Side-by-side review
 - [ ] Correction learning
 
-### Phase 2: Assemble
-- [ ] Suggestion engine (content similarity, continuation detection)
-- [ ] Approve/override flow
+### Phase 3: Assemble
 - [ ] Folder and document management
+- [ ] Suggestion engine (content similarity)
+- [ ] Approve/override flow
 - [ ] Batch operations
 
-### Phase 3: Editor
+### Phase 4: Editor
 - [ ] Clean reading view
 - [ ] Inline editing
-- [ ] Annotation markers and panel
 - [ ] Source tracing
 - [ ] Export
 
-### Phase 4: Annotations
-- [ ] Annotation detection in vision pipeline
-- [ ] "See image" fallback for unrecognized marks
+### Phase 5: Annotations
+- [ ] Rules-based annotation detection
 - [ ] Accept/dismiss flow in Inbox
-- [ ] Manual annotation in Editor
+- [ ] Annotation panel in Editor
 - [ ] Resolve flow
 
-### Phase 5: Polish
+### Phase 6: Mobile
+- [ ] iOS app with Apple Vision OCR
+- [ ] Android app with ML Kit OCR
+- [ ] Offline-first sync
+
+### Phase 7: Polish
 - [ ] Full keyboard navigation
 - [ ] Dark mode
 - [ ] Search across folders
-- [ ] Mobile companion app
 
 ---
 
