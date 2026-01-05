@@ -8,237 +8,470 @@ Patchwork bridges the gap between analog writing and digital organization. Scan 
 
 **Paper-first, not paper-only.** Many writers prefer the focus of a typewriter or the freedom of a notebook. But organizing, revising, and sharing that work requires digital tools. Patchwork doesn't try to replace your writing process—it helps you bring your pages into a format you can search, reorganize, and export.
 
-**Transparent intelligence.** The app uses local AI to read your pages and suggest actions, but every suggestion is visible and optional. You always see what the system thinks and why. No content leaves your machine.
+**Transparent intelligence.** Patchwork uses local AI to read your pages and suggest actions, but every suggestion is visible and optional. You always see what it thinks and why. No content leaves your machine.
 
-**Reading over writing.** This is a review and assembly tool, not an editor. The interface prioritizes legibility, comparison, and navigation over text input.
+**AI proposes, you approve.** Patchwork is optimized for the case where the AI is correct. Your job is to review and approve, with easy overrides when it's wrong.
 
 ---
 
 ## Core Concepts
 
-### Patches
+**Inbox**: A single global queue where all patches arrive after scanning. Review and correct them here before assembly.
 
-A **patch** is a scanned page converted to markdown. Patches live in your **inbox** until you decide what to do with them. Each patch shows:
+**Folders**: Containers for organizing your work. Folders can contain documents or other folders.
 
-- The original scan (zoomable, rotatable)
-- The converted markdown (editable for corrections)
-- A confidence indicator for the conversion
-- Suggested actions based on your existing documents
+**Documents**: Text files assembled from patches. Each document tracks which patches contributed to it.
 
-### Documents
+**Patches**: Pages you've scanned, converted to text. A patch starts in the inbox, gets reviewed, then gets applied to a document.
 
-A **document** is the assembled output—a markdown file built from patches. Documents can be:
+**Annotations**: Margin notes and editing marks detected on your pages—captured as metadata you can work through like a task list.
 
-- **Manuscripts**: Long-form works assembled from many patches
-- **Notes**: Standalone pieces, often single patches
-- **Collections**: Grouped documents (chapters of a book, entries in a journal)
+---
 
-### Operations
+## Workflow
 
-When you apply a patch to a document, you choose an **operation**:
+Patchwork has three modes, each for a different stage of the workflow:
 
-| Operation | Use Case |
-|-----------|----------|
-| **Append** | Adding new content to the end |
-| **Prepend** | Adding content to the beginning |
-| **Insert** | Placing content at a specific location |
-| **Replace** | Revising an existing section |
+```
+┌─────────┐      ┌──────────┐      ┌──────────┐
+│  INBOX  │  →   │ ASSEMBLE │  →   │  EDITOR  │
+│         │      │          │      │          │
+│  Review │      │  Build   │      │  Read &  │
+│ patches │      │  docs    │      │  refine  │
+└─────────┘      └──────────┘      └──────────┘
+```
 
-The system suggests operations based on content analysis, but you make the final call.
+---
+
+## Inbox Mode
+
+This is where patches arrive and get cleaned up. You're not thinking about organization yet—just making sure the text is correct and capturing any margin notes.
+
+### Importing
+
+Patchwork watches a configurable **import folder**. Drop images there (from your scanner, phone, or camera), and they appear in the inbox as patches.
+
+For each image, Patchwork:
+1. Converts the page to text
+2. Identifies margin annotations and editing marks
+3. Flags uncertain regions for review
+
+### The Inbox
+
+All patches arrive in one place. Items that need review are flagged:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  ◉ Patchwork                                 Inbox   [■ □]  │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  INBOX (47)                          [Select all] [Review]  │
+│  ──────────────────────────────────────────────────────────│
+│                                                             │
+│  Today                                                      │
+│  ├── page_047.jpg          ✓                               │
+│  ├── page_048.jpg          ✓                               │
+│  ├── page_049.jpg          ⚠ needs review                  │
+│  ├── page_050.jpg          ✓                               │
+│  └── ... (12 more)                                         │
+│                                                             │
+│  Yesterday                                                  │
+│  ├── chapter3_rev.jpg      ✓                               │
+│  └── ... (18 more)                                         │
+│                                                             │
+│  ──────────────────────────────────────────────────────────│
+│  47 patches · 3 need review · 44 ready                     │
+│                                                             │
+│  [→ Assemble]                                               │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Reviewing a Patch
+
+Click any patch to review it. Patchwork shows the original image and extracted text side by side, with uncertain words highlighted:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Reviewing: page_049.jpg                      ⚠ needs review│
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────────────┐    ┌─────────────────────────────┐ │
+│  │                     │    │                             │ │
+│  │  [original image]   │    │ The letter had been         │ │
+│  │   ~~~~~~~~~~~~      │    │ [written] in haste—she      │ │
+│  │  showing "written"  │    │ could tell by the way the   │ │
+│  │                     │    │ [t's] crossed themselves    │ │
+│  │                     │    │ like tiny [swords].         │ │
+│  │                     │    │                             │ │
+│  └─────────────────────┘    └─────────────────────────────┘ │
+│                                                             │
+│  3 uncertain words (click to edit, image zooms to match)   │
+│                                                             │
+│  ───────────────────────────────────────────────────────── │
+│  Annotations detected:                                      │
+│  ├─ ☑ "expand" (margin, para 2)                            │
+│  ├─ ☑ "?" (circled word: "swords")                         │
+│  └─ ☐ [dismiss]                                            │
+│                                                             │
+│  [← Prev]  [Mark reviewed ✓]  [Next →]                     │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+- **Click highlighted words** to edit them; the image pane zooms to that region
+- **Accept or dismiss annotations** detected in the margins
+- **Mark reviewed** when you're done with this patch
+
+Both panes scroll together, making comparison easy.
+
+### Learning from Corrections
+
+When you fix the same error multiple times, Patchwork offers to fix all instances:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  You've corrected "tbe" → "the" 3 times.                   │
+│                                                             │
+│  [Fix all in inbox]                              [Dismiss]  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Assemble Mode
+
+This is where reviewed patches become part of your documents. Patchwork suggests where each patch should go—most of the time you'll just approve and move on.
+
+### The Happy Path
+
+For each patch, Patchwork suggests where it belongs. When the suggestion is right, just approve it:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  ◉ Patchwork                              Assemble   [■ □]  │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  PATCH 1 of 12                                              │
+│  ──────────────────────────────────────────────────────────│
+│                                                             │
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │                                                         ││
+│  │  The morning arrived slowly, like a reluctant guest.    ││
+│  │                                                         ││
+│  │  Margaret hadn't slept in days. The letters kept        ││
+│  │  coming—one every morning, slipped under the door       ││
+│  │  before dawn. She'd stopped opening them after the      ││
+│  │  third one...                                           ││
+│  │                                                         ││
+│  └─────────────────────────────────────────────────────────┘│
+│                                                             │
+│  ───────────────────────────────────────────────────────── │
+│                                                             │
+│  Suggested:                                                 │
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │  📄 Add to end of Novel → Chapter 6                     ││
+│  │                                                         ││
+│  │  "First line continues from last paragraph of Ch 6"     ││
+│  │                                                         ││
+│  │  [Preview]                          [Apply ✓]  [Skip]   ││
+│  └─────────────────────────────────────────────────────────┘│
+│                                                             │
+│  Not right? [Choose where this goes...]                     │
+│                                                             │
+│  ──────────────────────────────────────────────────────────│
+│  Progress: ████░░░░░░░░░░░░░░░░  3 of 12                   │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+The workflow:
+1. See the patch content
+2. See the suggested placement with reasoning
+3. **Apply** if it's right, **Skip** to decide later, or choose a different location
+
+### Choosing Where a Patch Goes
+
+If the suggestion isn't right, click "Choose where this goes..." to pick the destination:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Where does this patch go?                                  │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  📁 Novel in Progress                                       │
+│     📁 Part One                                             │
+│        Chapter 1                                            │
+│        Chapter 2                                            │
+│        Chapter 3                                            │
+│     📁 Part Two                                             │
+│        Chapter 4                                            │
+│        Chapter 5                                            │
+│        Chapter 6  ← suggested                               │
+│  📁 Short Stories                                           │
+│  📁 Journal                                                 │
+│                                                             │
+│  + New document    + New folder                             │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+After selecting a document, Patchwork asks how to add the content:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  How should this be added to Chapter 6?                     │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ● Add to end                                              │
+│  ○ Add to beginning                                        │
+│  ○ Insert after paragraph...                               │
+│  ○ Replace existing section...                             │
+│                                                             │
+│  [Cancel]                                          [Apply]  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+Most of the time you'll pick "Add to end"—the other options are there when you need them.
+
+### Revisions
+
+When Patchwork detects that a patch is a revision of existing content, it suggests replacing:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Suggested:                                                 │
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │  📄 Replace in Novel → Chapter 3, paragraphs 4-6        ││
+│  │                                                         ││
+│  │  "This appears to be a revised version of existing text"││
+│  │                                                         ││
+│  │  [Preview diff]                     [Apply ✓]  [Skip]   ││
+│  └─────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────┘
+```
+
+Click "Preview diff" to see what will change before applying.
+
+### Batch Suggestions
+
+When Patchwork detects sequential pages, it suggests applying them as a group:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  PATCHES 4-8 of 12 (grouped)                                │
+│  ──────────────────────────────────────────────────────────│
+│                                                             │
+│  These 5 patches appear to be sequential pages:             │
+│                                                             │
+│  1. page_052.jpg  ─┐                                       │
+│  2. page_053.jpg   │                                       │
+│  3. page_054.jpg   ├─→  Add to end of Novel → Chapter 7    │
+│  4. page_055.jpg   │                                       │
+│  5. page_056.jpg  ─┘                                       │
+│                                                             │
+│  [Preview all]  [Reorder...]        [Apply all ✓]  [Skip]  │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### No Suggestion
+
+When Patchwork can't determine where a patch belongs:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  PATCH 11 of 12                                             │
+│  ──────────────────────────────────────────────────────────│
+│                                                             │
+│  [patch preview...]                                         │
+│                                                             │
+│  ───────────────────────────────────────────────────────── │
+│                                                             │
+│  No strong match found.                                     │
+│                                                             │
+│  [Choose where this goes...]        [Create new document]   │
+│                                                             │
+│                                                     [Skip]  │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Editor Mode
+
+This is where you read, annotate, and refine your assembled documents. Patchwork shows your writing in a clean, focused view with support for light editing and annotation.
+
+### The Editor
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Chapter 6                     Novel in Progress   [Export] │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│     The morning arrived slowly, like a reluctant guest.     │
+│                                                             │
+│     Margaret hadn't slept in days. The letters kept         │
+│  ●  coming—one every morning, slipped under the door        │
+│     before dawn. She'd stopped opening them after the       │
+│     third one.                                              │
+│                                                             │
+│     "You can't ignore them forever," David said. He         │
+│     was standing in the kitchen doorway, coffee in          │
+│  ▲  hand, wearing the expression she'd come to dread:       │
+│     concern mixed with something harder underneath.         │
+│                                                             │
+│     "Watch me."                                             │
+│                                                             │
+│     She turned back to the window. Outside, the street      │
+│     was empty except for a cat picking its way along        │
+│     the fence. Normal. Everything looked so painfully       │
+│     normal.                                                 │
+│                                                             │
+├─────────────────────────────────────────────────────────────┤
+│  ● "expand this scene"  ▲ "too on the nose?"   [+ Add note] │
+└─────────────────────────────────────────────────────────────┘
+```
+
+Features:
+- **Clean reading view**: Your writing fills the screen
+- **Inline editing**: Click to edit any text directly
+- **Annotation markers**: Small symbols in the margin, click for details
+- **Add annotations**: Create new notes as you read
+- **Export**: Always accessible in the header
+
+### Adding Annotations
+
+Click "+ Add note" or select text and annotate:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Add annotation                                             │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  Selected: "concern mixed with something harder underneath" │
+│                                                             │
+│  Note: [what is the "something harder"? need to set up    ] │
+│        [earlier                                           ] │
+│                                                             │
+│  [Cancel]                                            [Add]  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### The Annotations Panel
+
+Press `n` to see all annotations across the document (or folder):
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Annotations                              Novel in Progress │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  Filter: [All ▾]  [Unresolved ▾]                           │
+│                                                             │
+│  Chapter 3                                                  │
+│  ├─ ● "expand this scene"              [View] [Resolve]    │
+│  │   Para 4 · from page_019.jpg · Dec 28                   │
+│  └─ ● "too much backstory?"            [View] [Resolve]    │
+│      Para 12 · from page_020.jpg · Dec 28                  │
+│                                                             │
+│  Chapter 6                                                  │
+│  ├─ ● "expand this scene"              [View] [Resolve]    │
+│  │   Para 2 · from page_032.jpg · Yesterday                │
+│  ├─ ▲ "too on the nose?"               [View] [Resolve]    │
+│  │   Para 5 · from page_032.jpg · Yesterday                │
+│  └─ ✎ "what is the something harder?"  [View] [Resolve]    │
+│      Para 5 · added in Editor · Today                      │
+│                                                             │
+│  12 annotations · 8 unresolved                              │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Source Tracing
+
+Click any paragraph to see where it came from:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Source                                                     │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  "The morning arrived slowly, like a reluctant guest."      │
+│                                                             │
+│  ───────────────────────────────────────────────────────── │
+│  From: page_032.jpg                                         │
+│  Added: Yesterday, 4:45 PM                                  │
+│  Replaced: "The morning came slowly..."                     │
+│                                                             │
+│  [View original image]                                      │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Export
+
+Click "Export" in the header, or hover on a folder in the sidebar:
+
+- **Plain text**: Simple `.txt` files
+- **PDF**: Formatted for print or sharing
+- **HTML**: For web publishing
+- **DOCX**: For editors who need Word format
+- **Archive**: ZIP containing text + original images
+
+---
+
+## Annotations
+
+Annotations bridge your paper editing and digital organization. When you scribble "CUT" in the margin or circle a word with a question mark, Patchwork captures that as metadata.
+
+### Detection
+
+Patchwork looks for common editing marks:
+
+| Mark | Interpretation |
+|------|----------------|
+| "cut", "delete", ✗ | Remove this section |
+| "expand", "more" | Develop this further |
+| "move", → | Relocate this passage |
+| "?" or circled text | Review/reconsider |
+| "stet" | Keep as-is |
+| Margin notes | General comments |
+| Unrecognized marks | Shown as "[see image]" with thumbnail |
+
+When Patchwork can't interpret a mark, it captures the region and shows it as a thumbnail you can click to view the original.
+
+### Lifecycle
+
+1. **Detected** in Inbox mode during patch review
+2. **Accepted/dismissed** by you before leaving inbox
+3. **Attached** to document sections when patch is applied
+4. **Visible** in Editor mode as margin markers
+5. **Added** manually in Editor mode
+6. **Resolved** when you've addressed them
 
 ---
 
 ## History & Undo
 
-Patchwork keeps a complete history of your document so you can always go back.
-
-### Automatic Snapshots
-
-Every time you apply a patch, Patchwork saves a snapshot. You don't have to think about it—it just happens. If you make a mistake, you can revert to any previous state.
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  Novel.md                                    History ◷      │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  Today                                                      │
-│  ├── 2:34 PM   Applied "page_047.jpg" → Chapter 12         │
-│  ├── 2:30 PM   Applied "page_046.jpg" → Chapter 12         │
-│  └── 11:15 AM  Applied "page_045.jpg" → Chapter 11         │
-│                                                             │
-│  Yesterday                                                  │
-│  ├── 4:45 PM   Applied "revision_ch3.jpg" → Chapter 3      │
-│  └── 4:40 PM   Applied "page_044.jpg" → Chapter 11         │
-│                                                             │
-│  Dec 28                                                     │
-│  └── ...                                                    │
-│                                                             │
-│  [Revert to selected]              [Compare with current]   │
-└─────────────────────────────────────────────────────────────┘
-```
-
-Click any snapshot to preview. If you want to go back, hit "Revert" and you're there.
-
-### Source Tracing
-
-Every section of your document remembers where it came from. Click any paragraph to see:
-
-- The original scanned page
-- When it was added
-- What operation was used
-
-This is especially useful when reviewing—if something looks wrong, you can instantly pull up the source scan to check the original.
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  Chapter 3, paragraph 2                          Source ⓘ   │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  "The morning arrived slowly, like                          │
-│  a reluctant guest."                                        │
-│                                                             │
-│  ─────────────────────────────────────────────────────────  │
-│                                                             │
-│  Source: revision_ch3.jpg                                   │
-│  Added: Yesterday, 4:45 PM                                  │
-│  Operation: Replace (was "The morning came...")             │
-│                                                             │
-│  [View original scan]                                       │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
+Every time you apply a patch, Patchwork saves a snapshot. Revert to any previous state if needed. History is per-document.
 
 ---
 
-## Workflows
-
-### 1. Scanning
-
-```
-Camera/Scanner → Image Files → Patchwork Import
-```
-
-Patchwork watches a configurable **import folder**. Drop images there (or use the built-in camera capture on mobile), and they appear in your inbox as patches.
-
-The local vision model (Ollama + LLaVA or similar) processes each image:
-1. Detects text regions and page structure
-2. Converts content to markdown, preserving:
-   - Paragraphs and line breaks
-   - Headers (if detected)
-   - Emphasis (underlines → *italics*, strikethrough preserved)
-   - Lists and indentation
-3. Flags low-confidence regions for manual review
-
-### 2. Inbox Triage
-
-The inbox is your staging area. For each patch, you can:
-
-- **Preview**: Side-by-side view of scan and markdown
-- **Edit**: Correct OCR errors before applying
-- **Apply**: Choose a document and operation
-- **Defer**: Move to "Later" queue
-- **Discard**: Delete (with confirmation)
-
-#### Smart Suggestions
-
-Patchwork analyzes each patch against your documents and suggests likely actions:
-
-- **"Looks like a revision"**: Patch is 80%+ similar to an existing section → suggests Replace operation with diff preview
-- **"Continues from..."**: Patch starts where a document ends → suggests Append
-- **"New document?"**: No significant matches → suggests creating a new document
-- **"Part of a sequence"**: Multiple patches appear to be consecutive pages → suggests batch operation
-
-Suggestions show their reasoning (e.g., "First line matches last line of Chapter 3") so you can evaluate them.
-
-#### Batch Operations
-
-When you scan multiple pages:
-
-1. Patchwork attempts to detect page order (page numbers, continuation markers, content flow)
-2. Suggests grouping sequential patches
-3. Lets you reorder via drag-and-drop
-4. Applies the batch as a single operation (with undo)
-
-### 3. Document Assembly
-
-The document view shows your assembled work with:
-
-- **Section markers**: Visual indicators showing where each patch was applied
-- **Source links**: Click to see the original scan for any section
-- **Diff view**: For Replace operations, see exactly what changed
-
-#### Navigation
-
-- **Outline panel**: Jump to any section
-- **Minimap**: Visual overview of document structure
-- **Search**: Full-text search across all documents
-- **Filters**: Show only sections from certain date ranges, confidence levels, etc.
-
-### 4. Review & Correction
-
-After applying patches, review mode helps you catch errors:
-
-- **Low-confidence highlighting**: Regions the model was uncertain about
-- **Comparison view**: Original scan beside converted text
-- **Quick correction**: Click any word to edit, with the scan zoomed to that region
-- **Batch find/replace**: Fix systematic OCR errors (e.g., "tbe" → "the")
-
-### 5. Export
-
-Export documents as:
-
-- **Markdown**: Plain `.md` files
-- **PDF**: Formatted for print or sharing
-- **HTML**: For web publishing
-- **DOCX**: For editors who need Word format
-- **Archive**: ZIP containing markdown + original scans
-
----
-
-## Interface
-
-### Layout
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  ◉ Patchwork                              [Search]  [■ □]   │
-├─────────────┬───────────────────────────────────────────────┤
-│             │                                               │
-│  INBOX (12) │   [Scan Preview]         [Markdown Preview]   │
-│  ─────────  │                                               │
-│  ▸ Today    │   ┌─────────────┐       ┌─────────────────┐   │
-│    Page 1   │   │             │       │ # Chapter 7     │   │
-│    Page 2   │   │   [scan]    │       │                 │   │
-│    Page 3   │   │             │       │ The morning...  │   │
-│             │   └─────────────┘       └─────────────────┘   │
-│  DOCUMENTS  │                                               │
-│  ─────────  │   Confidence: 94%  ┃  Suggested: Append to    │
-│  ▸ Novel    │                    ┃  "Chapter 6" (continues) │
-│    Ch 1-6   │   ─────────────────────────────────────────   │
-│  ▸ Journal  │   [Discard]  [Defer]  [Edit]  [Apply ▾]       │
-│             │                                               │
-└─────────────┴───────────────────────────────────────────────┘
-```
-
-### Visual Principles
-
-- **High contrast**: Dark text on light backgrounds (or inverted in dark mode)
-- **Generous whitespace**: Content breathes; nothing feels cramped
-- **Large preview panes**: Scans and text are readable without zooming
-- **Minimal chrome**: Interface elements recede; your writing is the focus
-- **Diff colors**: Additions in green, removals in red, unchanged in gray
-
-### Keyboard Navigation
+## Keyboard Navigation
 
 | Key | Action |
 |-----|--------|
-| `j/k` | Next/previous patch in inbox |
-| `Space` | Toggle scan/markdown focus |
-| `e` | Edit current patch |
-| `a` | Apply with suggested action |
-| `d` | Defer patch |
+| `1` | Switch to Inbox mode |
+| `2` | Switch to Assemble mode |
+| `3` | Switch to Editor mode |
+| `j/k` | Next/previous item |
+| `Space` | Toggle image/text focus (Inbox) |
+| `Enter` | Apply suggested action (Assemble) |
+| `n` | Open annotations panel |
+| `e` | Export current document |
 | `u` | Undo last action |
-| `h` | Open history panel |
 | `/` | Search |
 | `?` | Show all shortcuts |
 
@@ -250,8 +483,8 @@ Export documents as:
 
 All processing happens on your machine:
 
-- **Vision model**: Ollama running LLaVA, Llama Vision, or compatible model
-- **Storage**: SQLite database + image files in a configurable location
+- **Vision model**: Ollama running LLaVA, Llama Vision, or compatible
+- **Storage**: SQLite database + image files
 - **No cloud**: Your manuscripts never leave your computer
 
 ### Stack
@@ -274,32 +507,38 @@ All processing happens on your machine:
 
 ## Roadmap
 
-### Phase 1: Core Loop
-- [ ] Image import and preprocessing
-- [ ] Ollama integration for OCR
-- [ ] Basic inbox with preview
-- [ ] Document creation and append operations
-- [ ] Markdown export
+### Phase 1: Inbox
+- [ ] Image import and watch folder
+- [ ] Ollama integration for text extraction
+- [ ] Uncertain region flagging
+- [ ] Side-by-side review
+- [ ] Correction learning
 
-### Phase 2: Smart Features
-- [ ] Content similarity detection
-- [ ] Operation suggestions
-- [ ] Batch patch handling
-- [ ] Page sequence detection
-- [ ] Replace operation with diff view
+### Phase 2: Assemble
+- [ ] Suggestion engine (content similarity, continuation detection)
+- [ ] Approve/override flow
+- [ ] Folder and document management
+- [ ] Batch operations
 
-### Phase 3: Polish
-- [ ] Automatic snapshots and undo
-- [ ] Source tracing UI
+### Phase 3: Editor
+- [ ] Clean reading view
+- [ ] Inline editing
+- [ ] Annotation markers and panel
+- [ ] Source tracing
+- [ ] Export
+
+### Phase 4: Annotations
+- [ ] Annotation detection in vision pipeline
+- [ ] "See image" fallback for unrecognized marks
+- [ ] Accept/dismiss flow in Inbox
+- [ ] Manual annotation in Editor
+- [ ] Resolve flow
+
+### Phase 5: Polish
 - [ ] Full keyboard navigation
 - [ ] Dark mode
-- [ ] Search across documents
-- [ ] Additional export formats
-
-### Phase 4: Extended
-- [ ] Mobile companion app (camera capture)
-- [ ] Handwriting model fine-tuning
-- [ ] Plugin system for custom operations
+- [ ] Search across folders
+- [ ] Mobile companion app
 
 ---
 
@@ -313,7 +552,7 @@ That's what this tool does for your writing: assembles pages into documents whil
 
 ## License
 
-[To be determined]
+Business Source License (BSL)
 
 ---
 
