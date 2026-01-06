@@ -10,49 +10,48 @@ This document contains key design decisions for implementing the Patchwork front
 - **State**: Svelte stores + Supabase Realtime
 - **Platform**: macOS only (uses Apple Vision for OCR)
 
+## Project Structure
+
+```
+patchwork-app/
+├── src/
+│   ├── lib/
+│   │   ├── components/
+│   │   │   ├── ui/          # Generic: Button, Card, Dialog (Bits UI based)
+│   │   │   ├── patch/       # PatchCard, PatchViewer, ConfidenceHighlighter
+│   │   │   ├── document/    # DocumentTree, SpanRenderer
+│   │   │   ├── scanner/     # ScannerSelector, ScanProgress
+│   │   │   └── layout/      # Sidebar, TopBar
+│   │   ├── stores/          # Svelte stores (patches, documents, scanner)
+│   │   ├── services/        # supabase.ts, tauri.ts
+│   │   └── types/           # TypeScript interfaces
+│   ├── routes/
+│   │   ├── inbox/           # Review patches, accept suggestions
+│   │   ├── assemble/        # Position patches in documents
+│   │   └── editor/          # View/edit documents, export
+│   └── tests/               # Test setup
+├── src-tauri/               # Rust backend (scanner, OCR)
+├── tailwind.config.js       # Custom "Analog Digital" theme
+└── vite.config.ts           # Vitest config included
+```
+
 ## Design Language: "Analog Digital"
 
-Paper-like aesthetic. Use these tokens consistently:
+Paper-like aesthetic. Key tokens in `tailwind.config.js`:
 
-```css
-/* Colors */
---paper: #FAFAF8;
---paper-dark: #F5F5F3;
---ink: #1A1A1A;
---ink-light: #4A4A4A;
---accent: #8B7355;  /* warm brown, like aged paper */
---highlight: #FFF9C4;  /* pale yellow for low-confidence text */
+- **Colors**: `paper` (#FAFAF8), `ink` (#1A1A1A), `accent` (#8B7355), `highlight` (#FFF9C4)
+- **Fonts**: `font-document` (Libre Baskerville), `font-ui` (Inter)
+- **Shadows**: `shadow-card`, `shadow-stack`
 
-/* Typography */
---font-document: 'Libre Baskerville', serif;  /* document content */
---font-ui: 'Inter', sans-serif;  /* interface elements */
+## Commands
 
-/* Shadows */
---shadow-card: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
---shadow-stack: 0 4px 6px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.04);
-```
-
-## Three Modes
-
-The app has exactly three modes, accessed via top navigation:
-
-1. **Inbox** (`/inbox`) - Review scanned patches, accept/reject suggestions
-2. **Assemble** (`/assemble`) - Position patches within documents
-3. **Editor** (`/editor`) - View and edit assembled documents
-
-## File Organization
-
-```
-src/lib/
-├── components/
-│   ├── ui/          # Generic: Button, Card, Dialog (based on Bits UI)
-│   ├── patch/       # PatchCard, PatchViewer, ConfidenceHighlighter
-│   ├── document/    # DocumentTree, SpanRenderer
-│   ├── scanner/     # ScannerSelector, ScanProgress, ScanButton
-│   └── layout/      # Sidebar, ModeSelector, TopBar
-├── stores/          # Svelte stores with Supabase subscriptions
-├── services/        # supabase.ts, tauri.ts (wrappers)
-└── types/           # TypeScript interfaces matching backend
+```bash
+npm run dev          # Start Vite dev server (port 5173)
+npm run build        # Build for production
+npm test             # Run Vitest tests
+npm run check        # TypeScript + Svelte check
+npm run tauri dev    # Run full Tauri app (requires Rust)
+npm run tauri build  # Build Tauri app for distribution
 ```
 
 ## Tauri Commands
@@ -67,39 +66,26 @@ const result = await invoke<ScanResult[]>('scan_batch', { url, settings });
 const ocr = await invoke<OcrResult>('perform_ocr', { imagePath });
 ```
 
-## Supabase Integration
+## Path Aliases
 
-Use the client from `$lib/services/supabase.ts`. Key patterns:
+Configured in `svelte.config.js`:
 
-```typescript
-// Auth - stored in Supabase, session persisted
-const { data: { user } } = await supabase.auth.getUser();
+- `$components` → `src/lib/components`
+- `$stores` → `src/lib/stores`
+- `$services` → `src/lib/services`
+- `$types` → `src/lib/types`
 
-// Realtime subscriptions for live updates
-supabase.channel('patches')
-  .on('postgres_changes', {
-    event: '*',
-    schema: 'public',
-    table: 'patches',
-    filter: `user_id=eq.${user.id}`
-  }, handleChange)
-  .subscribe();
+## Testing
 
-// Call Edge Functions
-const { data } = await supabase.functions.invoke('generate-suggestion', {
-  body: { patch_id }
-});
+- Tests co-located with source: `*.test.ts`
+- Run with `npm test` (Vitest)
+- Setup file: `src/tests/setup.ts`
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and configure:
+
 ```
-
-## Important Conventions
-
-1. **No drivers** - Scanner uses eSCL over HTTP, discovered via mDNS
-2. **OCR on-device** - Apple Vision, not cloud API
-3. **Spans are immutable** - Edits create new `typed_content`, old spans archived
-4. **Optimistic updates** - Update UI immediately, rollback on failure
-5. **User owns data** - All queries filtered by `user_id` via RLS
-
-## Backend Reference
-
-- See `../supabase/README.md` for Edge Function API docs
-- See `../ARCHITECTURE.md` for data model (spans, versions, etc.)
+PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
