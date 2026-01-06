@@ -166,3 +166,37 @@ The schema uses pgvector for semantic similarity search. Key functions:
 - `find_candidate_documents(embedding, user_id, ...)` - Find documents containing similar content
 
 These are used by the suggestion algorithm to match new patches to existing documents.
+
+## Testing
+
+The backend has comprehensive test coverage. See [tests/README.md](./tests/README.md) for full documentation.
+
+### Quick Start
+
+```bash
+# Start local Supabase
+supabase start
+
+# Run database tests
+psql postgresql://postgres:postgres@localhost:54322/postgres \
+  -f tests/database/001_schema_test.sql \
+  -f tests/database/002_functions_test.sql \
+  -f tests/database/003_vector_search_test.sql
+
+# Serve functions locally
+supabase functions serve &
+
+# Run Edge Function tests
+deno test --allow-net --allow-env functions/_tests/
+```
+
+### Test Coverage
+
+| Component | Tests |
+|-----------|-------|
+| Schema | Tables, columns, indexes, constraints, RLS |
+| Database Functions | `get_document_content`, `record_correction`, `fractional_index_between` |
+| Vector Search | `find_similar_patches`, `find_candidate_documents` |
+| generate-suggestion | Auth, heuristics, vector similarity, response structure |
+| apply-patch | Operations, versioning, paragraph splitting, annotations |
+| embed-content | Auth, embedding creation, access control |

@@ -17,6 +17,14 @@
     "indentWidth": 2,
     "singleQuote": false
   },
+  "test": {
+    "include": ["_tests/**/*.ts"],
+    "exclude": []
+  },
+  "tasks": {
+    "test": "deno test --allow-net --allow-env _tests/",
+    "test:coverage": "deno test --allow-net --allow-env --coverage=coverage _tests/ && deno coverage coverage"
+  },
   "imports": {
     "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
   }
