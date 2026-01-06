@@ -26,7 +26,7 @@
 </script>
 
 {#if shouldShow}
-	<div class="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 transform">
+	<div class="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 transform" role="status" aria-live="polite">
 		<div class="rounded-lg border border-paper-dark bg-white px-4 py-3 shadow-lg">
 			<div class="flex items-center gap-4">
 				{#if state.isProcessing}
@@ -68,6 +68,7 @@
 					<button
 						class="text-sm text-accent hover:text-accent/80"
 						onclick={handleViewClick}
+						aria-label="View import details"
 					>
 						View
 					</button>
@@ -76,6 +77,7 @@
 						<button
 							class="text-sm text-ink-light hover:text-ink"
 							onclick={handleDismiss}
+							aria-label="Dismiss import notification"
 						>
 							Dismiss
 						</button>
