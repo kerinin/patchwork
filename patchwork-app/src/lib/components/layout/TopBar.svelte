@@ -2,10 +2,10 @@
 	import { page } from '$app/stores';
 	import ConnectionStatus from '$components/ui/ConnectionStatus.svelte';
 
-	const modes = [
-		{ name: 'Inbox', path: '/inbox', description: 'Review scanned patches' },
+	const navItems = [
+		{ name: 'Import', path: '/import', description: 'Import scanned patches' },
 		{ name: 'Assemble', path: '/assemble', description: 'Build documents from patches' },
-		{ name: 'Editor', path: '/editor', description: 'Edit and export documents' }
+		{ name: 'Edit', path: '/editor', description: 'Edit and export documents' }
 	];
 
 	function isActive(path: string): boolean {
@@ -15,7 +15,7 @@
 
 <header class="flex items-center justify-between border-b border-paper-dark bg-white px-6 py-3">
 	<nav class="flex gap-2">
-		{#each modes as mode}
+		{#each navItems as mode}
 			<a
 				href={mode.path}
 				class="mode-button {isActive(mode.path) ? 'mode-button-active' : 'mode-button-inactive'}"
