@@ -55,6 +55,7 @@ describe("generate-suggestion", () => {
       );
 
       assertEquals(response.status, 401);
+      await response.body?.cancel(); // Consume body to avoid leak
     });
 
     it("should reject requests with invalid token", async () => {
@@ -133,7 +134,7 @@ describe("generate-suggestion", () => {
   describe("filename heuristics", () => {
     it("should suggest based on chapter filename", async () => {
       // Create a document named "Chapter 6"
-      const { data: doc } = await serviceClient
+      const { data: doc, error: docError } = await serviceClient
         .from("documents")
         .insert({
           user_id: testUser.id,
@@ -144,8 +145,10 @@ describe("generate-suggestion", () => {
         .select()
         .single();
 
+      if (docError) throw new Error(`Failed to create doc: ${docError.message}`);
+
       // Create patch with filename hint
-      const { data: patch } = await serviceClient
+      const { data: patch, error: patchError } = await serviceClient
         .from("patches")
         .insert({
           user_id: testUser.id,
@@ -156,6 +159,8 @@ describe("generate-suggestion", () => {
         })
         .select()
         .single();
+
+      if (patchError) throw new Error(`Failed to create patch: ${patchError.message}`);
 
       const { status, data } = await callFunction(
         "generate-suggestion",

@@ -169,34 +169,118 @@ These are used by the suggestion algorithm to match new patches to existing docu
 
 ## Testing
 
-The backend has comprehensive test coverage. See [tests/README.md](./tests/README.md) for full documentation.
+The backend has comprehensive test coverage with 54 automated tests.
 
-### Quick Start
+### Prerequisites
+
+- [Supabase CLI](https://supabase.com/docs/guides/cli)
+- [Deno](https://deno.land/) v1.x or later
+- Docker (required by Supabase CLI)
+
+### Running Tests Locally
 
 ```bash
-# Start local Supabase
+# 1. Start local Supabase (from project root or supabase/ directory)
 supabase start
 
-# Run database tests
-psql postgresql://postgres:postgres@localhost:54322/postgres \
-  -f tests/database/001_schema_test.sql \
-  -f tests/database/002_functions_test.sql \
-  -f tests/database/003_vector_search_test.sql
+# 2. Reset database to apply migrations
+supabase db reset
 
-# Serve functions locally
-supabase functions serve &
+# 3. Start Edge Functions server (in background)
+supabase functions serve --no-verify-jwt --env-file functions/.env.local &
 
-# Run Edge Function tests
-deno test --allow-net --allow-env functions/_tests/
+# 4. Wait for functions to initialize
+sleep 5
+
+# 5. Set environment variables
+export SUPABASE_URL="http://127.0.0.1:54321"
+export SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0"
+export SUPABASE_SERVICE_ROLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU"
+export FUNCTIONS_URL="http://127.0.0.1:54321/functions/v1"
+
+# 6. Run tests
+cd functions
+deno test --no-check --no-lock --allow-net --allow-env _tests/
+
+# 7. Clean up when done
+supabase stop
 ```
+
+Note: The anon and service role keys above are the default local development keys used by `supabase start`. They are deterministic and safe to commit.
+
+### Running Tests in CI
+
+Tests run automatically on push/PR via GitHub Actions. See `.github/workflows/test-backend.yml`.
+
+The CI workflow:
+1. Starts Supabase services (minimal set for testing)
+2. Applies database migrations
+3. Starts Edge Functions with mock embeddings
+4. Runs all Deno tests
+5. Reports results
+
+### Mock Mode
+
+Tests use mock embeddings (no OpenAI API required). Create the env file from the example:
+
+```bash
+cp functions/.env.local.example functions/.env.local
+```
+
+This sets `MOCK_EMBEDDINGS=true` which generates deterministic embeddings based on text content.
+
+Mock embeddings are deterministic based on text content, allowing consistent test behavior.
 
 ### Test Coverage
 
-| Component | Tests |
-|-----------|-------|
-| Schema | Tables, columns, indexes, constraints, RLS |
-| Database Functions | `get_document_content`, `record_correction`, `fractional_index_between` |
-| Vector Search | `find_similar_patches`, `find_candidate_documents` |
-| generate-suggestion | Auth, heuristics, vector similarity, response structure |
-| apply-patch | Operations, versioning, paragraph splitting, annotations |
-| embed-content | Auth, embedding creation, access control |
+| Component | Tests | Description |
+|-----------|-------|-------------|
+| generate-suggestion | 18 | Auth, validation, heuristics, vector similarity, response structure |
+| apply-patch | 18 | Auth, operations (append/prepend/replace), versioning, paragraph splitting, annotations |
+| embed-content | 10 | Auth, validation, embedding creation, idempotency, access control |
+
+**Total: 54 tests**
+
+### Test Structure
+
+```
+functions/_tests/
+├── test_helpers.ts           # Shared utilities, fixtures, assertions
+├── mocks.ts                  # Mock implementations
+├── generate_suggestion_test.ts
+├── apply_patch_test.ts
+└── embed_content_test.ts
+```
+
+### Writing New Tests
+
+Tests use Deno's built-in test runner with `describe`/`it` syntax:
+
+```typescript
+import { describe, it, beforeAll, afterAll } from "https://deno.land/std@0.177.0/testing/bdd.ts";
+import { assertEquals } from "https://deno.land/std@0.177.0/testing/asserts.ts";
+import { createServiceClient, createTestUser, callFunction } from "./test_helpers.ts";
+
+describe("my-function", () => {
+  let serviceClient: SupabaseClient;
+  let testUser: TestUser;
+
+  beforeAll(async () => {
+    serviceClient = createServiceClient();
+    testUser = await createTestUser(serviceClient);
+  });
+
+  afterAll(async () => {
+    await cleanupTestUser(serviceClient, testUser.id);
+  });
+
+  it("should do something", async () => {
+    const { status, data } = await callFunction(
+      "my-function",
+      { param: "value" },
+      testUser.accessToken
+    );
+    assertEquals(status, 200);
+  });
+});
+```

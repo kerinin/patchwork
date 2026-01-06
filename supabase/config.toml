@@ -30,5 +30,4 @@ enable_signup = true
 double_confirm_changes = true
 enable_confirmations = false
 
-[functions]
-enabled = true
+# Edge Functions are enabled by default when using `supabase functions serve`

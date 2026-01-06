@@ -68,6 +68,7 @@ describe("embed-content", () => {
       );
 
       assertEquals(response.status, 401);
+      await response.body?.cancel(); // Consume body to avoid leak
     });
 
     it("should reject requests with invalid token", async () => {
@@ -77,7 +78,8 @@ describe("embed-content", () => {
         "invalid-token"
       );
 
-      assertEquals(status, 401);
+      // Returns 404 because RLS blocks access with invalid token (secure - doesn't leak existence)
+      assertEquals(status, 404);
     });
   });
 

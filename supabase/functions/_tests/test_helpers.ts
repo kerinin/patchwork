@@ -40,7 +40,12 @@ export interface TestUser {
 
 // Create a service client (bypasses RLS)
 export function createServiceClient(): SupabaseClient {
-  return createClient(TEST_CONFIG.supabaseUrl, TEST_CONFIG.supabaseServiceKey);
+  return createClient(TEST_CONFIG.supabaseUrl, TEST_CONFIG.supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
 }
 
 // Create a client with user auth
@@ -55,22 +60,39 @@ export function createAuthenticatedClient(accessToken: string): SupabaseClient {
 }
 
 // Create a test user and return credentials
-export async function createTestUser(serviceClient: SupabaseClient): Promise<TestUser> {
+// Uses a separate auth client to avoid contaminating the service client session
+export async function createTestUser(_serviceClient: SupabaseClient): Promise<TestUser> {
   const email = `test-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
-  const password = "test-password-123";
+  const password = "testpassword123";
 
-  const { data, error } = await serviceClient.auth.admin.createUser({
+  // Use a separate client for auth to avoid session contamination
+  const authClient = createClient(TEST_CONFIG.supabaseUrl, TEST_CONFIG.supabaseAnonKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+
+  // Create user via admin API using service role
+  const adminClient = createClient(TEST_CONFIG.supabaseUrl, TEST_CONFIG.supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+
+  const { data: adminData, error: adminError } = await adminClient.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
   });
 
-  if (error) {
-    throw new Error(`Failed to create test user: ${error.message}`);
+  if (adminError) {
+    throw new Error(`Failed to create test user: ${adminError.message}`);
   }
 
-  // Sign in to get access token
-  const { data: signInData, error: signInError } = await serviceClient.auth.signInWithPassword({
+  // Sign in with separate client to get access token
+  const { data: signInData, error: signInError } = await authClient.auth.signInWithPassword({
     email,
     password,
   });
@@ -80,7 +102,7 @@ export async function createTestUser(serviceClient: SupabaseClient): Promise<Tes
   }
 
   return {
-    id: data.user!.id,
+    id: adminData.user!.id,
     email,
     accessToken: signInData.session!.access_token,
   };

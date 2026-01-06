@@ -96,6 +96,7 @@ describe("apply-patch", () => {
       );
 
       assertEquals(response.status, 401);
+      await response.body?.cancel(); // Consume body to avoid leak
     });
   });
 

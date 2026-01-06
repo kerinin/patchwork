@@ -78,7 +78,7 @@ Second paragraph here.', 'applied')
     FOR content_result IN
         SELECT * FROM get_document_content(test_document_id)
     LOOP
-        RAISE NOTICE 'Position: %, Content: %', content_result.position, content_result.content;
+        RAISE NOTICE 'Position: %, Content: %', content_result.span_position, content_result.content;
     END LOOP;
 
     -- Should have 3 spans at current version

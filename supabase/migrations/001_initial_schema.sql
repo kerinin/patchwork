@@ -21,11 +21,16 @@ CREATE TABLE profiles (
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO profiles (id, display_name)
-    VALUES (NEW.id, NEW.raw_user_meta_data->>'display_name');
+    INSERT INTO public.profiles (id, display_name)
+    VALUES (NEW.id, COALESCE(NEW.raw_user_meta_data->>'display_name', split_part(NEW.email, '@', 1)))
+    ON CONFLICT (id) DO NOTHING;
+    RETURN NEW;
+EXCEPTION WHEN OTHERS THEN
+    -- Log error but don't fail user creation
+    RAISE WARNING 'Failed to create profile for user %: %', NEW.id, SQLERRM;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
@@ -267,7 +272,9 @@ CREATE POLICY "Users can create own typed content"
     ON typed_content FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
--- Typed content is immutable, no update policy
+CREATE POLICY "Users can update own typed content"
+    ON typed_content FOR UPDATE
+    USING (auth.uid() = user_id);
 
 CREATE POLICY "Users can delete own typed content"
     ON typed_content FOR DELETE
@@ -399,7 +406,7 @@ RETURNS TABLE (
     source_id UUID,
     source_start INTEGER,
     source_end INTEGER,
-    position TEXT,
+    span_position TEXT,
     content TEXT
 ) AS $$
 DECLARE
@@ -419,7 +426,7 @@ BEGIN
         s.source_id,
         s.source_start,
         s.source_end,
-        s.position,
+        s."position" AS span_position,
         CASE
             WHEN s.source_type = 'patch' THEN
                 SUBSTRING(p.extracted_text FROM s.source_start + 1 FOR s.source_end - s.source_start)
@@ -432,7 +439,7 @@ BEGIN
     WHERE s.document_id = doc_id
         AND s.version_added <= v
         AND (s.version_removed IS NULL OR s.version_removed > v)
-    ORDER BY s.position;
+    ORDER BY s."position";
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -480,17 +487,17 @@ RETURNS TABLE (
 ) AS $$
 BEGIN
     RETURN QUERY
-    WITH similar AS (
+    WITH similar_patches_cte AS (
         SELECT * FROM find_similar_patches(query_embedding, user_uuid, exclude_patch_id)
     )
     SELECT
         d.id AS document_id,
         d.name AS document_name,
         d.folder_id,
-        MAX(similar.similarity) AS max_similarity,
-        COUNT(DISTINCT similar.patch_id)::INTEGER AS matching_patches
-    FROM similar
-    JOIN spans s ON s.source_type = 'patch' AND s.source_id = similar.patch_id
+        MAX(similar_patches_cte.similarity) AS max_similarity,
+        COUNT(DISTINCT similar_patches_cte.patch_id)::INTEGER AS matching_patches
+    FROM similar_patches_cte
+    JOIN spans s ON s.source_type = 'patch' AND s.source_id = similar_patches_cte.patch_id
     JOIN documents d ON d.id = s.document_id
     WHERE s.version_removed IS NULL  -- only active spans
     GROUP BY d.id, d.name, d.folder_id

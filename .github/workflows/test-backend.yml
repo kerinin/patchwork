@@ -1,0 +1,75 @@
+name: Backend Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/**'
+      - '.github/workflows/test-backend.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/**'
+      - '.github/workflows/test-backend.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+
+      - name: Start Supabase
+        run: |
+          supabase start -x imgproxy,studio,inbucket,pgadmin-schema-diff,migra,postgres-meta,logflare,edge-runtime,vector
+          # Wait for services to be ready
+          sleep 5
+
+      - name: Get Supabase Status
+        id: supabase
+        run: |
+          echo "SUPABASE_URL=http://127.0.0.1:54321" >> $GITHUB_OUTPUT
+          echo "SUPABASE_ANON_KEY=$(supabase status --output json | jq -r '.ANON_KEY')" >> $GITHUB_OUTPUT
+          echo "SUPABASE_SERVICE_ROLE_KEY=$(supabase status --output json | jq -r '.SERVICE_ROLE_KEY')" >> $GITHUB_OUTPUT
+
+      - name: Apply Migrations
+        run: supabase db reset
+        working-directory: supabase
+
+      - name: Start Edge Functions
+        run: |
+          supabase functions serve --no-verify-jwt --env-file functions/.env.local &
+          # Wait for functions to be ready
+          sleep 10
+          # Verify functions are responding
+          curl -s http://127.0.0.1:54321/functions/v1/generate-suggestion -X POST -H "Content-Type: application/json" -d '{}' || true
+        working-directory: supabase
+
+      - name: Run Edge Function Tests
+        env:
+          SUPABASE_URL: ${{ steps.supabase.outputs.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ steps.supabase.outputs.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ steps.supabase.outputs.SUPABASE_SERVICE_ROLE_KEY }}
+          FUNCTIONS_URL: http://127.0.0.1:54321/functions/v1
+        run: |
+          deno test \
+            --no-check \
+            --no-lock \
+            --allow-net \
+            --allow-env \
+            _tests/
+        working-directory: supabase/functions
+
+      - name: Stop Supabase
+        if: always()
+        run: supabase stop
