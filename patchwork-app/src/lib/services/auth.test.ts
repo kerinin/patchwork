@@ -92,6 +92,45 @@ describe('auth service', () => {
 			const { ensureAuthenticated } = await import('./auth');
 			await expect(ensureAuthenticated()).rejects.toThrow('Dev auto-login failed: Invalid credentials');
 		});
+
+		it('should throw error if auto-login returns no user', async () => {
+			mockGetSession.mockResolvedValueOnce({
+				data: { session: null },
+				error: null
+			});
+			mockSignInWithPassword.mockResolvedValueOnce({
+				data: { user: null },
+				error: null
+			});
+
+			const { ensureAuthenticated } = await import('./auth');
+			await expect(ensureAuthenticated()).rejects.toThrow('Dev auto-login returned no user');
+		});
+
+		it('should throw error when not in browser environment', async () => {
+			vi.doMock('$app/environment', () => ({
+				browser: false,
+				dev: true
+			}));
+
+			const { ensureAuthenticated } = await import('./auth');
+			await expect(ensureAuthenticated()).rejects.toThrow('Authentication only available in browser');
+		});
+
+		it('should throw error when auto-login disabled (dev: false)', async () => {
+			vi.doMock('$app/environment', () => ({
+				browser: true,
+				dev: false
+			}));
+
+			mockGetSession.mockResolvedValueOnce({
+				data: { session: null },
+				error: null
+			});
+
+			const { ensureAuthenticated } = await import('./auth');
+			await expect(ensureAuthenticated()).rejects.toThrow('Not authenticated and auto-login disabled');
+		});
 	});
 
 	describe('getCurrentUserId', () => {

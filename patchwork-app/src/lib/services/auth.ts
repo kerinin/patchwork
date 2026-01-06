@@ -1,7 +1,16 @@
 import { browser, dev } from '$app/environment';
 import { getSupabase } from '$lib/services/supabase';
 
-// Dev credentials - only used in development mode
+/**
+ * Dev credentials for auto-login convenience feature.
+ *
+ * These are hardcoded rather than using environment variables because:
+ * 1. DEV_AUTO_LOGIN = dev ensures this only runs in development mode
+ * 2. SvelteKit env vars aren't easily accessible in browser code
+ * 3. This is acceptable for a dev-only convenience feature
+ *
+ * To use: create a user in Supabase Auth with these credentials.
+ */
 const DEV_AUTO_LOGIN = dev;
 const DEV_USER_EMAIL = 'dev@patchwork.local';
 const DEV_USER_PASSWORD = 'devpassword123';
@@ -34,7 +43,7 @@ export async function ensureAuthenticated(): Promise<AuthUser> {
 	}
 
 	if (session?.user) {
-		return { id: session.user.id, email: session.user.email };
+		return { id: session.user.id, email: session.user.email ?? undefined };
 	}
 
 	// No session - try auto-login in dev mode
