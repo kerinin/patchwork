@@ -2,7 +2,6 @@
 -- Creates all tables, indexes, RLS policies, and storage buckets
 
 -- Enable required extensions
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "vector";
 
 -- ============================================================================
@@ -42,7 +41,7 @@ CREATE TRIGGER on_auth_user_created
 -- ============================================================================
 
 CREATE TABLE folders (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     parent_id UUID REFERENCES folders(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
@@ -59,7 +58,7 @@ CREATE INDEX folders_parent_id_idx ON folders(parent_id);
 -- ============================================================================
 
 CREATE TABLE documents (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     folder_id UUID REFERENCES folders(id) ON DELETE SET NULL,
     name TEXT NOT NULL,
@@ -77,7 +76,7 @@ CREATE INDEX documents_updated_at_idx ON documents(user_id, updated_at DESC);
 -- ============================================================================
 
 CREATE TABLE patches (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     status TEXT NOT NULL DEFAULT 'inbox'
         CHECK (status IN ('inbox', 'review', 'ready', 'applied', 'discarded')),
@@ -109,7 +108,7 @@ CREATE INDEX patches_embedding_idx ON patches
 -- ============================================================================
 
 CREATE TABLE typed_content (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     content TEXT NOT NULL,
     embedding VECTOR(1536),
@@ -128,7 +127,7 @@ CREATE INDEX typed_content_embedding_idx ON typed_content
 -- ============================================================================
 
 CREATE TABLE corrections (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     original TEXT NOT NULL,
     corrected TEXT NOT NULL,
@@ -147,7 +146,7 @@ CREATE INDEX corrections_lookup_idx ON corrections(user_id, original);
 -- ============================================================================
 
 CREATE TABLE spans (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
     source_type TEXT NOT NULL CHECK (source_type IN ('patch', 'typed')),
     source_id UUID NOT NULL,
@@ -169,7 +168,7 @@ CREATE INDEX spans_version_idx ON spans(document_id, version_added, version_remo
 -- ============================================================================
 
 CREATE TABLE annotations (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     source TEXT NOT NULL CHECK (source IN ('detected', 'manual')),
     patch_id UUID REFERENCES patches(id) ON DELETE CASCADE,

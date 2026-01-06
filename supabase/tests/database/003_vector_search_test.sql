@@ -38,18 +38,18 @@ BEGIN
 
     -- Create folder and document
     INSERT INTO folders (id, user_id, name, position)
-    VALUES (uuid_generate_v4(), test_user_id, 'Vector Test Folder', 'a')
+    VALUES (gen_random_uuid(), test_user_id, 'Vector Test Folder', 'a')
     RETURNING id INTO test_folder_id;
 
     INSERT INTO documents (id, user_id, folder_id, name, current_version)
-    VALUES (uuid_generate_v4(), test_user_id, test_folder_id, 'Vector Test Document', 1)
+    VALUES (gen_random_uuid(), test_user_id, test_folder_id, 'Vector Test Document', 1)
     RETURNING id INTO test_document_id;
 
     -- Create patches with embeddings
     -- Patch 1: Similar to query
     INSERT INTO patches (id, user_id, image_path, extracted_text, embedding, status)
     VALUES (
-        uuid_generate_v4(),
+        gen_random_uuid(),
         test_user_id,
         'test/similar.jpg',
         'This content is similar to the query.',
@@ -61,7 +61,7 @@ BEGIN
     -- Patch 2: Also similar
     INSERT INTO patches (id, user_id, image_path, extracted_text, embedding, status)
     VALUES (
-        uuid_generate_v4(),
+        gen_random_uuid(),
         test_user_id,
         'test/also-similar.jpg',
         'Another piece of similar content.',
@@ -73,7 +73,7 @@ BEGIN
     -- Patch 3: Different
     INSERT INTO patches (id, user_id, image_path, extracted_text, embedding, status)
     VALUES (
-        uuid_generate_v4(),
+        gen_random_uuid(),
         test_user_id,
         'test/different.jpg',
         'This content is very different.',

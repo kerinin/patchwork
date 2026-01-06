@@ -27,28 +27,28 @@ BEGIN
 
     -- Create test folder
     INSERT INTO folders (id, user_id, name, position)
-    VALUES (uuid_generate_v4(), test_user_id, 'Test Folder', 'a')
+    VALUES (gen_random_uuid(), test_user_id, 'Test Folder', 'a')
     RETURNING id INTO test_folder_id;
 
     -- Create test document
     INSERT INTO documents (id, user_id, folder_id, name, current_version)
-    VALUES (uuid_generate_v4(), test_user_id, test_folder_id, 'Test Document', 3)
+    VALUES (gen_random_uuid(), test_user_id, test_folder_id, 'Test Document', 3)
     RETURNING id INTO test_document_id;
 
     -- Create test patches
     INSERT INTO patches (id, user_id, image_path, extracted_text, status)
-    VALUES (uuid_generate_v4(), test_user_id, 'test/patch1.jpg', 'First paragraph of content.
+    VALUES (gen_random_uuid(), test_user_id, 'test/patch1.jpg', 'First paragraph of content.
 
 Second paragraph here.', 'applied')
     RETURNING id INTO test_patch_1_id;
 
     INSERT INTO patches (id, user_id, image_path, extracted_text, status)
-    VALUES (uuid_generate_v4(), test_user_id, 'test/patch2.jpg', 'Third paragraph added later.', 'applied')
+    VALUES (gen_random_uuid(), test_user_id, 'test/patch2.jpg', 'Third paragraph added later.', 'applied')
     RETURNING id INTO test_patch_2_id;
 
     -- Create typed content
     INSERT INTO typed_content (id, user_id, content)
-    VALUES (uuid_generate_v4(), test_user_id, 'User typed this content.')
+    VALUES (gen_random_uuid(), test_user_id, 'User typed this content.')
     RETURNING id INTO test_typed_id;
 
     -- Create spans for version 1 (first patch applied)
