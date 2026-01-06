@@ -1,21 +1,32 @@
 import { createWorker, type Worker } from 'tesseract.js';
 import type { OcrResult, OcrWord } from '$lib/types/models';
 
-// Confidence threshold - below this, patch needs review
+/**
+ * Confidence thresholds for OCR quality assessment.
+ *
+ * OVERALL_CONFIDENCE_THRESHOLD (85%): Tesseract's confidence scores typically range
+ * from 0-100. Values above 85% generally indicate clean, well-lit images with
+ * standard fonts. Below this, the entire result should be flagged for review.
+ *
+ * WORD_CONFIDENCE_THRESHOLD (75%): Individual words can have lower confidence due
+ * to handwriting, unusual fonts, or partial occlusion. We use a lower threshold
+ * for words to avoid excessive false positives while still catching likely errors.
+ */
 const OVERALL_CONFIDENCE_THRESHOLD = 85;
 const WORD_CONFIDENCE_THRESHOLD = 75;
 
-let workerInstance: Worker | null = null;
+let workerPromise: Promise<Worker> | null = null;
 
 /**
  * Gets or creates a Tesseract worker instance.
  * Worker is reused across calls for performance.
+ * Uses promise-based singleton to prevent race conditions on concurrent calls.
  */
 async function getWorker(): Promise<Worker> {
-	if (!workerInstance) {
-		workerInstance = await createWorker('eng');
+	if (!workerPromise) {
+		workerPromise = createWorker('eng');
 	}
-	return workerInstance;
+	return workerPromise;
 }
 
 /**
@@ -26,7 +37,7 @@ export async function performOcr(image: string | File | Blob): Promise<OcrResult
 
 	const { data } = await worker.recognize(image);
 
-	const words: OcrWord[] = data.words.map((word) => ({
+	const words: OcrWord[] = (data.words ?? []).map((word) => ({
 		text: word.text,
 		confidence: word.confidence,
 		bounding_box: {
@@ -73,8 +84,9 @@ export function getLowConfidenceWords(result: OcrResult): OcrWord[] {
  * Terminates the worker (call on app shutdown).
  */
 export async function terminateOcr(): Promise<void> {
-	if (workerInstance) {
-		await workerInstance.terminate();
-		workerInstance = null;
+	if (workerPromise) {
+		const worker = await workerPromise;
+		await worker.terminate();
+		workerPromise = null;
 	}
 }
