@@ -37,6 +37,7 @@
 	"dependencies": {
 		"@supabase/supabase-js": "^2.89.0",
 		"@tauri-apps/api": "^2.9.1",
-		"bits-ui": "^2.15.4"
+		"bits-ui": "^2.15.4",
+		"tesseract.js": "^7.0.0"
 	}
 }
