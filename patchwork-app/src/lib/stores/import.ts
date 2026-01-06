@@ -1,4 +1,9 @@
-import { writable, derived } from 'svelte/store';
+import { writable, derived, get } from 'svelte/store';
+import { browser } from '$app/environment';
+import { storage, patches } from '$lib/services/supabase';
+import { performOcr, needsReview } from '$lib/services/ocr';
+import { getCurrentUserId } from '$lib/services/auth';
+import type { PatchStatus, ConfidenceData } from '$lib/types/models';
 
 // Accepted image types
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/tiff'];
@@ -163,11 +168,92 @@ export function clearCompleted(): void {
 
 /**
  * Process the queue - starts processing pending items.
- * This triggers the import workflow for any pending files.
+ * Runs items in parallel with concurrency limit.
  */
-export function processQueue(): void {
-	// Set processing state to true to indicate queue is being processed
+export async function processQueue(concurrency = 3): Promise<void> {
+	if (!browser) return;
+
+	const state = get(importState);
+	if (state.isProcessing) return;
+
 	importState.setProcessing(true);
+
+	try {
+		const pending = state.queue.filter((item) => item.status === 'pending');
+
+		// Process in batches
+		for (let i = 0; i < pending.length; i += concurrency) {
+			const batch = pending.slice(i, i + concurrency);
+			await Promise.all(batch.map((item) => processItem(item)));
+		}
+	} finally {
+		importState.setProcessing(false);
+	}
+}
+
+/**
+ * Process a single import item through the full pipeline.
+ */
+async function processItem(item: ImportItem): Promise<void> {
+	try {
+		const userId = await getCurrentUserId();
+
+		// Step 1: Upload to storage
+		importState.updateItem(item.id, { status: 'uploading', progress: 10 });
+
+		const imagePath = await storage.uploadPatchImage(
+			userId,
+			item.file,
+			`${item.id}-${item.file.name}`
+		);
+
+		// Step 2: Create patch record with processing status
+		importState.updateItem(item.id, { status: 'processing', progress: 30 });
+
+		const patch = await patches.create({
+			user_id: userId,
+			status: 'processing' as PatchStatus,
+			image_path: imagePath,
+			original_filename: item.file.name,
+			import_batch_id: null,
+			extracted_text: '',
+			embedding: null,
+			confidence_data: { overall: 0 },
+			suggested_action: null
+		});
+
+		// Step 3: Run OCR
+		importState.updateItem(item.id, { progress: 50 });
+
+		const ocrResult = await performOcr(item.file);
+
+		// Step 4: Determine status based on OCR confidence
+		const status: PatchStatus = needsReview(ocrResult) ? 'needs_review' : 'ready';
+
+		const confidenceData: ConfidenceData = {
+			overall: ocrResult.confidence,
+			words: ocrResult.words.map((w) => ({
+				text: w.text,
+				confidence: w.confidence,
+				bounding_box: w.bounding_box
+			}))
+		};
+
+		// Step 5: Update patch with OCR results
+		importState.updateItem(item.id, { progress: 80 });
+
+		await patches.update(patch.id, {
+			status,
+			extracted_text: ocrResult.text,
+			confidence_data: confidenceData
+		});
+
+		// Complete
+		importState.completeItem(item.id, patch.id);
+	} catch (error) {
+		const message = error instanceof Error ? error.message : 'Unknown error';
+		importState.errorItem(item.id, message);
+	}
 }
 
 /**

@@ -10,7 +10,35 @@ vi.mock('$env/static/public', () => ({
 }));
 
 vi.mock('$app/environment', () => ({
-	browser: true
+	browser: true,
+	dev: true
+}));
+
+// Mock services used by processQueue
+const mockUploadPatchImage = vi.fn();
+const mockCreatePatch = vi.fn();
+const mockUpdatePatch = vi.fn();
+const mockPerformOcr = vi.fn();
+const mockNeedsReview = vi.fn();
+const mockGetCurrentUserId = vi.fn();
+
+vi.mock('$lib/services/supabase', () => ({
+	storage: {
+		uploadPatchImage: (...args: unknown[]) => mockUploadPatchImage(...args)
+	},
+	patches: {
+		create: (...args: unknown[]) => mockCreatePatch(...args),
+		update: (...args: unknown[]) => mockUpdatePatch(...args)
+	}
+}));
+
+vi.mock('$lib/services/ocr', () => ({
+	performOcr: (...args: unknown[]) => mockPerformOcr(...args),
+	needsReview: (...args: unknown[]) => mockNeedsReview(...args)
+}));
+
+vi.mock('$lib/services/auth', () => ({
+	getCurrentUserId: () => mockGetCurrentUserId()
 }));
 
 describe('import store', () => {
@@ -83,6 +111,98 @@ describe('import store', () => {
 			state = get(importState);
 			expect(state.queue).toHaveLength(0);
 			expect(state.completedCount).toBe(0);
+		});
+	});
+
+	describe('processQueue', () => {
+		it('should process pending items through full pipeline', async () => {
+			// Setup mocks
+			mockGetCurrentUserId.mockResolvedValue('user-123');
+			mockUploadPatchImage.mockResolvedValue('images/test-path.jpg');
+			mockCreatePatch.mockResolvedValue({ id: 'patch-456' });
+			mockUpdatePatch.mockResolvedValue({});
+			mockPerformOcr.mockResolvedValue({
+				text: 'Hello World',
+				confidence: 0.95,
+				words: [
+					{ text: 'Hello', confidence: 0.96, bounding_box: { x: 0, y: 0, width: 50, height: 20 } },
+					{ text: 'World', confidence: 0.94, bounding_box: { x: 55, y: 0, width: 50, height: 20 } }
+				]
+			});
+			mockNeedsReview.mockReturnValue(false);
+
+			const { importState, addFilesToQueue, processQueue } = await import('./import');
+
+			// Add a file to the queue
+			const file = new File(['test content'], 'test.jpg', { type: 'image/jpeg' });
+			addFilesToQueue([file]);
+
+			// Process the queue
+			await processQueue();
+
+			// Verify the pipeline was executed
+			expect(mockGetCurrentUserId).toHaveBeenCalled();
+			expect(mockUploadPatchImage).toHaveBeenCalledWith('user-123', file, expect.stringContaining('test.jpg'));
+			expect(mockCreatePatch).toHaveBeenCalledWith(
+				expect.objectContaining({
+					user_id: 'user-123',
+					status: 'processing',
+					image_path: 'images/test-path.jpg',
+					original_filename: 'test.jpg'
+				})
+			);
+			expect(mockPerformOcr).toHaveBeenCalledWith(file);
+			expect(mockUpdatePatch).toHaveBeenCalledWith(
+				'patch-456',
+				expect.objectContaining({
+					status: 'ready',
+					extracted_text: 'Hello World'
+				})
+			);
+
+			// Verify final state
+			const state = get(importState);
+			expect(state.isProcessing).toBe(false);
+			expect(state.completedCount).toBe(1);
+			expect(state.queue[0].status).toBe('complete');
+			expect(state.queue[0].patchId).toBe('patch-456');
+		});
+
+		it('should mark item as error on failure', async () => {
+			mockGetCurrentUserId.mockRejectedValue(new Error('Auth failed'));
+
+			const { importState, addFilesToQueue, processQueue } = await import('./import');
+
+			addFilesToQueue([new File(['test'], 'test.jpg', { type: 'image/jpeg' })]);
+			await processQueue();
+
+			const state = get(importState);
+			expect(state.queue[0].status).toBe('error');
+			expect(state.queue[0].error).toBe('Auth failed');
+			expect(state.isProcessing).toBe(false);
+		});
+
+		it('should set needs_review status for low confidence OCR', async () => {
+			mockGetCurrentUserId.mockResolvedValue('user-123');
+			mockUploadPatchImage.mockResolvedValue('images/test.jpg');
+			mockCreatePatch.mockResolvedValue({ id: 'patch-789' });
+			mockUpdatePatch.mockResolvedValue({});
+			mockPerformOcr.mockResolvedValue({
+				text: 'Blurry text',
+				confidence: 0.65,
+				words: []
+			});
+			mockNeedsReview.mockReturnValue(true);
+
+			const { importState, addFilesToQueue, processQueue } = await import('./import');
+
+			addFilesToQueue([new File(['test'], 'blurry.jpg', { type: 'image/jpeg' })]);
+			await processQueue();
+
+			expect(mockUpdatePatch).toHaveBeenCalledWith(
+				'patch-789',
+				expect.objectContaining({ status: 'needs_review' })
+			);
 		});
 	});
 });
