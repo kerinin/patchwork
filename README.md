@@ -8,7 +8,7 @@ Patchwork bridges the gap between analog writing and digital organization. Scan 
 
 **Paper-first, not paper-only.** Many writers prefer the focus of a typewriter or the freedom of a notebook. But organizing, revising, and sharing that work requires digital tools. Patchwork doesn't try to replace your writing process—it helps you bring your pages into a format you can search, reorganize, and export.
 
-**Transparent intelligence.** Patchwork uses local AI to read your pages and suggest actions, but every suggestion is visible and optional. You always see what it thinks and why. No content leaves your machine.
+**Transparent intelligence.** Patchwork uses on-device OCR to read your pages and cloud-based AI for suggestions, but every suggestion is visible and optional. You always see what it thinks and why.
 
 **AI proposes, you approve.** Patchwork is optimized for the case where the AI is correct. Your job is to review and approve, with easy overrides when it's wrong.
 
@@ -479,7 +479,7 @@ Every time you apply a patch, Patchwork saves a snapshot. Revert to any previous
 
 ## Technical Architecture
 
-Patchwork uses a cloud-synced architecture with on-device OCR. Text extraction happens locally on your device (no large model downloads), while documents sync across devices via a lightweight backend.
+Patchwork uses a cloud-synced architecture with on-device OCR. Text extraction happens locally on your device using platform APIs, while documents sync across devices via Supabase. Suggestions are generated server-side using OpenAI embeddings.
 
 ### Overview
 
@@ -510,8 +510,15 @@ Patchwork uses a cloud-synced architecture with on-device OCR. Text extraction h
 │                                                             │
 │   ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │
 │   │  Postgres   │  │   Storage   │  │  Realtime   │        │
-│   │  Database   │  │   (images)  │  │   (sync)    │        │
+│   │  + pgvector │  │   (images)  │  │   (sync)    │        │
 │   └─────────────┘  └─────────────┘  └─────────────┘        │
+│                                                             │
+│   ┌─────────────────────────────────────────────────┐      │
+│   │              Edge Functions                      │      │
+│   │  • generate-suggestion (OpenAI embeddings)       │      │
+│   │  • apply-patch (document assembly)               │      │
+│   │  • embed-content (typed content embeddings)      │      │
+│   └─────────────────────────────────────────────────┘      │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -530,12 +537,13 @@ Annotation detection uses a lightweight rules-based system initially, with optio
 
 ### Backend (Supabase)
 
-- **Postgres**: Stores folders, documents, patches, annotations
+- **Postgres + pgvector**: Stores all data with vector similarity search
 - **Storage**: Original images (S3-compatible)
 - **Realtime**: Sync changes across devices
 - **Auth**: User accounts, row-level security
+- **Edge Functions**: Server-side logic for suggestions and document assembly
 
-See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed data model and API.
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for data model and [supabase/README.md](./supabase/README.md) for backend implementation details.
 
 ### Clients
 
@@ -547,9 +555,11 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed data model and API.
 
 ## Roadmap
 
-### Phase 1: Foundation
-- [ ] Supabase project setup (database, storage, auth)
-- [ ] Data model and migrations
+### Phase 1: Foundation ✅
+- [x] Supabase project setup (database, storage, auth)
+- [x] Data model and migrations
+- [x] Edge Functions (generate-suggestion, apply-patch, embed-content)
+- [x] Automated testing (54 tests)
 - [ ] Web app scaffolding (SvelteKit)
 - [ ] Basic auth flow
 
@@ -561,7 +571,7 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed data model and API.
 
 ### Phase 3: Assemble
 - [ ] Folder and document management
-- [ ] Suggestion engine (content similarity)
+- [ ] Suggestion engine UI (backend complete ✅)
 - [ ] Approve/override flow
 - [ ] Batch operations
 
