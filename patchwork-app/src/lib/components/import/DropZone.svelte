@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { addFilesToQueue } from '$lib/stores/import';
+	import { addFilesToQueue, processQueue } from '$lib/stores/import';
 	import type { Snippet } from 'svelte';
 
 	interface Props {
@@ -54,6 +54,7 @@
 		}
 
 		onFilesAdded?.();
+		processQueue();
 	}
 
 	function handleFileInput(e: Event) {
@@ -71,6 +72,7 @@
 			}
 
 			onFilesAdded?.();
+			processQueue();
 		}
 
 		// Reset input
@@ -82,6 +84,7 @@
 	}
 </script>
 
+<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <div
 	class="drop-zone relative min-h-[200px] rounded-lg border-2 border-dashed transition-colors"
 	class:border-accent={isDragging}
@@ -93,6 +96,7 @@
 	ondrop={handleDrop}
 	role="region"
 	aria-label="Drop zone for importing files"
+	tabindex="0"
 >
 	{#if isDragging}
 		<div class="absolute inset-0 flex items-center justify-center bg-highlight/80">

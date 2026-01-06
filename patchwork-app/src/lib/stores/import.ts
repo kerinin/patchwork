@@ -160,3 +160,12 @@ export function addFilesToQueue(files: File[]): File[] {
 export function clearCompleted(): void {
 	importState.clearCompleted();
 }
+
+/**
+ * Process the queue - starts processing pending items.
+ * This triggers the import workflow for any pending files.
+ */
+export function processQueue(): void {
+	// Set processing state to true to indicate queue is being processed
+	importState.setProcessing(true);
+}
