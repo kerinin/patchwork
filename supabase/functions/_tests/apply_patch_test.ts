@@ -1,10 +1,6 @@
 // Tests for apply-patch Edge Function
 
-import {
-  assertEquals,
-  assertExists,
-  assertNotEquals,
-} from "https://deno.land/std@0.177.0/testing/asserts.ts";
+import { assertEquals, assertExists } from "https://deno.land/std@0.177.0/testing/asserts.ts";
 import {
   afterAll,
   afterEach,
@@ -15,10 +11,10 @@ import {
 } from "https://deno.land/std@0.177.0/testing/bdd.ts";
 
 import {
+  callFunction,
+  cleanupTestUser,
   createServiceClient,
   createTestUser,
-  cleanupTestUser,
-  callFunction,
   TestUser,
 } from "./test_helpers.ts";
 
@@ -65,7 +61,8 @@ describe("apply-patch", () => {
       .insert({
         user_id: testUser.id,
         image_path: `${testUser.id}/test.jpg`,
-        extracted_text: "First paragraph content.\n\nSecond paragraph content.\n\nThird paragraph content.",
+        extracted_text:
+          "First paragraph content.\n\nSecond paragraph content.\n\nThird paragraph content.",
         status: "ready",
       })
       .select()
@@ -92,7 +89,7 @@ describe("apply-patch", () => {
             document_id: documentId,
             operation: "append",
           }),
-        }
+        },
       );
 
       assertEquals(response.status, 401);
@@ -105,21 +102,21 @@ describe("apply-patch", () => {
       const { status: status1 } = await callFunction(
         "apply-patch",
         { document_id: documentId, operation: "append" },
-        testUser.accessToken
+        testUser.accessToken,
       );
       assertEquals(status1, 400);
 
       const { status: status2 } = await callFunction(
         "apply-patch",
         { patch_id: patchId, operation: "append" },
-        testUser.accessToken
+        testUser.accessToken,
       );
       assertEquals(status2, 400);
 
       const { status: status3 } = await callFunction(
         "apply-patch",
         { patch_id: patchId, document_id: documentId },
-        testUser.accessToken
+        testUser.accessToken,
       );
       assertEquals(status3, 400);
     });
@@ -132,7 +129,7 @@ describe("apply-patch", () => {
           document_id: documentId,
           operation: "append",
         },
-        testUser.accessToken
+        testUser.accessToken,
       );
 
       assertEquals(status, 404);
@@ -146,7 +143,7 @@ describe("apply-patch", () => {
           document_id: "00000000-0000-0000-0000-000000000000",
           operation: "append",
         },
-        testUser.accessToken
+        testUser.accessToken,
       );
 
       assertEquals(status, 404);
@@ -157,14 +154,14 @@ describe("apply-patch", () => {
       await callFunction(
         "apply-patch",
         { patch_id: patchId, document_id: documentId, operation: "append" },
-        testUser.accessToken
+        testUser.accessToken,
       );
 
       // Second apply should fail
       const { status, data } = await callFunction(
         "apply-patch",
         { patch_id: patchId, document_id: documentId, operation: "append" },
-        testUser.accessToken
+        testUser.accessToken,
       );
 
       assertEquals(status, 400);
@@ -177,7 +174,7 @@ describe("apply-patch", () => {
       const { status, data } = await callFunction(
         "apply-patch",
         { patch_id: patchId, document_id: documentId, operation: "append" },
-        testUser.accessToken
+        testUser.accessToken,
       );
 
       assertEquals(status, 200);
@@ -205,7 +202,7 @@ describe("apply-patch", () => {
       await callFunction(
         "apply-patch",
         { patch_id: patchId, document_id: documentId, operation: "append" },
-        testUser.accessToken
+        testUser.accessToken,
       );
 
       const { data: after } = await serviceClient
@@ -221,7 +218,7 @@ describe("apply-patch", () => {
       await callFunction(
         "apply-patch",
         { patch_id: patchId, document_id: documentId, operation: "append" },
-        testUser.accessToken
+        testUser.accessToken,
       );
 
       const { data: patch } = await serviceClient
@@ -238,7 +235,7 @@ describe("apply-patch", () => {
       await callFunction(
         "apply-patch",
         { patch_id: patchId, document_id: documentId, operation: "append" },
-        testUser.accessToken
+        testUser.accessToken,
       );
 
       const { data: spans } = await serviceClient
@@ -260,7 +257,7 @@ describe("apply-patch", () => {
       await callFunction(
         "apply-patch",
         { patch_id: patchId, document_id: documentId, operation: "append" },
-        testUser.accessToken
+        testUser.accessToken,
       );
 
       // Create another patch
@@ -279,7 +276,7 @@ describe("apply-patch", () => {
       await callFunction(
         "apply-patch",
         { patch_id: patch2.id, document_id: documentId, operation: "prepend" },
-        testUser.accessToken
+        testUser.accessToken,
       );
 
       // Get all spans ordered
@@ -304,7 +301,7 @@ describe("apply-patch", () => {
       await callFunction(
         "apply-patch",
         { patch_id: patchId, document_id: documentId, operation: "append" },
-        testUser.accessToken
+        testUser.accessToken,
       );
 
       // Get the span IDs to replace
@@ -336,7 +333,7 @@ describe("apply-patch", () => {
           operation: "replace",
           replace_spans: [spanToReplace],
         },
-        testUser.accessToken
+        testUser.accessToken,
       );
 
       // Check old span is marked as removed
@@ -365,7 +362,7 @@ describe("apply-patch", () => {
       await callFunction(
         "apply-patch",
         { patch_id: patchId, document_id: documentId, operation: "append" },
-        testUser.accessToken
+        testUser.accessToken,
       );
 
       const { data: v1Doc } = await serviceClient
@@ -401,7 +398,7 @@ describe("apply-patch", () => {
           operation: "replace",
           replace_spans: [oldSpans![0].id],
         },
-        testUser.accessToken
+        testUser.accessToken,
       );
 
       // Query version 1 - should still have all original spans
@@ -440,7 +437,7 @@ describe("apply-patch", () => {
       await callFunction(
         "apply-patch",
         { patch_id: multiParaPatch.id, document_id: documentId, operation: "append" },
-        testUser.accessToken
+        testUser.accessToken,
       );
 
       const { data: spans } = await serviceClient
@@ -469,7 +466,7 @@ describe("apply-patch", () => {
       await callFunction(
         "apply-patch",
         { patch_id: singleNewlinePatch.id, document_id: documentId, operation: "append" },
-        testUser.accessToken
+        testUser.accessToken,
       );
 
       const { data: spans } = await serviceClient
@@ -504,7 +501,7 @@ describe("apply-patch", () => {
       await callFunction(
         "apply-patch",
         { patch_id: patchId, document_id: documentId, operation: "append" },
-        testUser.accessToken
+        testUser.accessToken,
       );
 
       // Check annotation is linked to document
@@ -539,7 +536,7 @@ describe("apply-patch", () => {
       await callFunction(
         "apply-patch",
         { patch_id: patchId, document_id: documentId, operation: "append" },
-        testUser.accessToken
+        testUser.accessToken,
       );
 
       // Annotation should not be linked

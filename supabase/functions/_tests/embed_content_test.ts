@@ -1,9 +1,6 @@
 // Tests for embed-content Edge Function
 
-import {
-  assertEquals,
-  assertExists,
-} from "https://deno.land/std@0.177.0/testing/asserts.ts";
+import { assertEquals, assertExists } from "https://deno.land/std@0.177.0/testing/asserts.ts";
 import {
   afterAll,
   afterEach,
@@ -14,10 +11,10 @@ import {
 } from "https://deno.land/std@0.177.0/testing/bdd.ts";
 
 import {
+  callFunction,
+  cleanupTestUser,
   createServiceClient,
   createTestUser,
-  cleanupTestUser,
-  callFunction,
   TestUser,
 } from "./test_helpers.ts";
 import { mockOpenAIEmbeddings } from "./mocks.ts";
@@ -64,7 +61,7 @@ describe("embed-content", () => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ typed_content_id: typedContentId }),
-        }
+        },
       );
 
       assertEquals(response.status, 401);
@@ -75,7 +72,7 @@ describe("embed-content", () => {
       const { status } = await callFunction(
         "embed-content",
         { typed_content_id: typedContentId },
-        "invalid-token"
+        "invalid-token",
       );
 
       // Returns 404 because RLS blocks access with invalid token (secure - doesn't leak existence)
@@ -85,10 +82,10 @@ describe("embed-content", () => {
 
   describe("validation", () => {
     it("should require typed_content_id", async () => {
-      const { status, data } = await callFunction(
+      const { status } = await callFunction(
         "embed-content",
         {},
-        testUser.accessToken
+        testUser.accessToken,
       );
 
       assertEquals(status, 400);
@@ -98,7 +95,7 @@ describe("embed-content", () => {
       const { status } = await callFunction(
         "embed-content",
         { typed_content_id: "00000000-0000-0000-0000-000000000000" },
-        testUser.accessToken
+        testUser.accessToken,
       );
 
       assertEquals(status, 404);
@@ -110,7 +107,7 @@ describe("embed-content", () => {
       const { status, data } = await callFunction(
         "embed-content",
         { typed_content_id: typedContentId },
-        testUser.accessToken
+        testUser.accessToken,
       );
 
       assertEquals(status, 200);
@@ -130,7 +127,7 @@ describe("embed-content", () => {
       const { status, data } = await callFunction(
         "embed-content",
         { typed_content_id: typedContentId },
-        testUser.accessToken
+        testUser.accessToken,
       );
 
       assertEquals(status, 200);
@@ -149,7 +146,7 @@ describe("embed-content", () => {
       const { status: status1 } = await callFunction(
         "embed-content",
         { typed_content_id: shortContent.id },
-        testUser.accessToken
+        testUser.accessToken,
       );
       assertEquals(status1, 200);
 
@@ -164,7 +161,7 @@ describe("embed-content", () => {
       const { status: status2 } = await callFunction(
         "embed-content",
         { typed_content_id: longContent.id },
-        testUser.accessToken
+        testUser.accessToken,
       );
       assertEquals(status2, 200);
 
@@ -178,7 +175,7 @@ describe("embed-content", () => {
       const { status: status1 } = await callFunction(
         "embed-content",
         { typed_content_id: typedContentId },
-        testUser.accessToken
+        testUser.accessToken,
       );
       assertEquals(status1, 200);
 
@@ -192,7 +189,7 @@ describe("embed-content", () => {
       const { status: status2 } = await callFunction(
         "embed-content",
         { typed_content_id: typedContentId },
-        testUser.accessToken
+        testUser.accessToken,
       );
       assertEquals(status2, 200);
 
@@ -224,7 +221,7 @@ describe("embed-content", () => {
       const { status } = await callFunction(
         "embed-content",
         { typed_content_id: otherContent.id },
-        testUser.accessToken
+        testUser.accessToken,
       );
 
       // Should get 404 because RLS hides the content

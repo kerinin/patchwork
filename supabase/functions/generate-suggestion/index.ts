@@ -126,7 +126,7 @@ serve(async (req) => {
 async function generateSuggestion(
   supabase: ReturnType<typeof createSupabaseClient>,
   patch: Patch,
-  userId: string
+  userId: string,
 ): Promise<SuggestedAction> {
   // Step 1: Try heuristics first
   const heuristicSuggestion = await tryHeuristics(supabase, patch, userId);
@@ -190,7 +190,7 @@ async function generateSuggestion(
       supabase,
       topCandidate.document_id,
       patch.extracted_text,
-      embedding
+      embedding,
     );
 
     return {
@@ -206,7 +206,7 @@ async function generateSuggestion(
     const continuesFromEnd = await checkContinuation(
       supabase,
       topCandidate.document_id,
-      patch.extracted_text
+      patch.extracted_text,
     );
 
     return {
@@ -238,14 +238,14 @@ async function generateSuggestion(
 async function tryHeuristics(
   supabase: ReturnType<typeof createSupabaseClient>,
   patch: Patch,
-  userId: string
+  userId: string,
 ): Promise<SuggestedAction | null> {
   // Heuristic 1: Filename parsing
   if (patch.original_filename) {
     const filenameMatch = await matchDocumentByFilename(
       supabase,
       patch.original_filename,
-      userId
+      userId,
     );
     if (filenameMatch) {
       return filenameMatch;
@@ -257,7 +257,7 @@ async function tryHeuristics(
     const sequentialMatch = await findSequentialDestination(
       supabase,
       patch.import_batch_id,
-      patch.id
+      patch.id,
     );
     if (sequentialMatch) {
       return sequentialMatch;
@@ -289,7 +289,7 @@ async function tryHeuristics(
 async function matchDocumentByFilename(
   supabase: ReturnType<typeof createSupabaseClient>,
   filename: string,
-  userId: string
+  _userId: string,
 ): Promise<SuggestedAction | null> {
   // Extract potential document name hints from filename
   // Examples: "chapter6_page3.jpg" -> "chapter 6", "chapter6"
@@ -352,7 +352,7 @@ async function matchDocumentByFilename(
 async function findSequentialDestination(
   supabase: ReturnType<typeof createSupabaseClient>,
   batchId: string,
-  currentPatchId: string
+  _currentPatchId: string,
 ): Promise<SuggestedAction | null> {
   // Find other patches in the same batch that have been applied
   const { data: batchPatches } = await supabase
@@ -395,8 +395,8 @@ async function findSequentialDestination(
 async function findSpansToReplace(
   supabase: ReturnType<typeof createSupabaseClient>,
   documentId: string,
-  newText: string,
-  newEmbedding: number[]
+  _newText: string,
+  newEmbedding: number[],
 ): Promise<string[]> {
   // Find the most similar spans in this document
   // For now, we'll use a simple approach: find spans from similar patches
@@ -430,7 +430,7 @@ async function findSpansToReplace(
 async function checkContinuation(
   supabase: ReturnType<typeof createSupabaseClient>,
   documentId: string,
-  newText: string
+  newText: string,
 ): Promise<boolean> {
   // Get the last paragraph of the document
   const { data: content } = await supabase
@@ -451,7 +451,9 @@ async function checkContinuation(
   const firstWord = firstSentence.trim().split(/\s/)[0] || "";
 
   // If last paragraph ends mid-sentence and new text starts lowercase, likely continuation
-  if (!['.', '!', '?', '"', "'"].includes(lastChar) && firstWord[0]?.toLowerCase() === firstWord[0]) {
+  if (
+    ![".", "!", "?", '"', "'"].includes(lastChar) && firstWord[0]?.toLowerCase() === firstWord[0]
+  ) {
     return true;
   }
 

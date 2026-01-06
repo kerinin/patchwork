@@ -39,7 +39,7 @@ serve(async (req) => {
     if (!patch_id || !document_id || !operation) {
       return new Response(
         JSON.stringify({ error: "patch_id, document_id, and operation are required" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
+        { status: 400, headers: { "Content-Type": "application/json" } },
       );
     }
 
@@ -92,7 +92,7 @@ serve(async (req) => {
       operation,
       paragraphs.length,
       position,
-      replace_spans
+      replace_spans,
     );
 
     // If replacing, mark old spans as removed
@@ -168,7 +168,7 @@ serve(async (req) => {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
         },
-      }
+      },
     );
   } catch (error) {
     console.error("Error:", error);
@@ -219,7 +219,7 @@ async function calculatePositions(
   operation: string,
   count: number,
   afterPosition?: string,
-  replaceSpans?: string[]
+  replaceSpans?: string[],
 ): Promise<string[]> {
   // Get existing spans to understand current positions
   const { data: existingSpans } = await supabase
@@ -271,8 +271,9 @@ async function calculatePositions(
       // Need more positions - use first replaced position and generate more
       const startPos = replacedPositions[0] || "M";
       const nextSpan = existing.find(
-        (s) => s.position > replacedPositions[replacedPositions.length - 1] &&
-          !replaceSpans.includes(s.id)
+        (s) =>
+          s.position > replacedPositions[replacedPositions.length - 1] &&
+          !replaceSpans.includes(s.id),
       );
       const endPos = nextSpan?.position || incrementPosition(startPos, count + 1);
 

@@ -6,7 +6,7 @@ import { createMockEmbedding } from "./test_helpers.ts";
 export function mockOpenAIEmbeddings(): void {
   const originalFetch = globalThis.fetch;
 
-  globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+  globalThis.fetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const url = typeof input === "string" ? input : input.toString();
 
     // Intercept OpenAI embedding requests
@@ -20,20 +20,22 @@ export function mockOpenAIEmbeddings(): void {
         embedding: createMockEmbedding(hashString(text)),
       }));
 
-      return new Response(
-        JSON.stringify({
-          object: "list",
-          data: embeddings,
-          model: "text-embedding-3-small",
-          usage: {
-            prompt_tokens: inputs.reduce((sum: number, t: string) => sum + t.length / 4, 0),
-            total_tokens: inputs.reduce((sum: number, t: string) => sum + t.length / 4, 0),
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            object: "list",
+            data: embeddings,
+            model: "text-embedding-3-small",
+            usage: {
+              prompt_tokens: inputs.reduce((sum: number, t: string) => sum + t.length / 4, 0),
+              total_tokens: inputs.reduce((sum: number, t: string) => sum + t.length / 4, 0),
+            },
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
           },
-        }),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        }
+        ),
       );
     }
 
@@ -102,11 +104,11 @@ interface MockAuth {
 }
 
 export function createMockSupabaseClient(
-  mockData: Record<string, unknown[]> = {}
+  mockData: Record<string, unknown[]> = {},
 ): MockSupabaseClient {
   const createQueryBuilder = (table: string): MockQueryBuilder => {
     let _data = mockData[table] || [];
-    let _filters: Array<(item: Record<string, unknown>) => boolean> = [];
+    const _filters: Array<(item: Record<string, unknown>) => boolean> = [];
     let _limit: number | null = null;
     let _orderBy: string | null = null;
     let _orderAsc = true;
@@ -123,9 +125,7 @@ export function createMockSupabaseClient(
       },
       update: () => builder,
       delete: () => {
-        _data = _data.filter((item) =>
-          !_filters.every((f) => f(item as Record<string, unknown>))
-        );
+        _data = _data.filter((item) => !_filters.every((f) => f(item as Record<string, unknown>)));
         return builder;
       },
       eq: (column, value) => {
@@ -159,7 +159,7 @@ export function createMockSupabaseClient(
         _limit = count;
         return builder;
       },
-      single: async () => {
+      single: () => {
         let result = _data.filter((item) =>
           _filters.every((f) => f(item as Record<string, unknown>))
         );
@@ -174,11 +174,11 @@ export function createMockSupabaseClient(
         }
 
         if (result.length === 0) {
-          return { data: null, error: { message: "Not found" } };
+          return Promise.resolve({ data: null, error: { message: "Not found" } });
         }
-        return { data: result[0], error: null };
+        return Promise.resolve({ data: result[0], error: null });
       },
-      then: async (resolve) => {
+      then: (resolve) => {
         let result = _data.filter((item) =>
           _filters.every((f) => f(item as Record<string, unknown>))
         );
@@ -197,6 +197,7 @@ export function createMockSupabaseClient(
         }
 
         resolve({ data: result, error: null });
+        return Promise.resolve();
       },
     };
 
@@ -205,31 +206,32 @@ export function createMockSupabaseClient(
 
   return {
     from: createQueryBuilder,
-    rpc: async (fn, params) => {
+    rpc: (fn: string, _params?: Record<string, unknown>) => {
       // Mock RPC responses based on function name
       if (fn === "find_similar_patches") {
-        return { data: mockData["similar_patches"] || [], error: null };
+        return Promise.resolve({ data: mockData["similar_patches"] || [], error: null });
       }
       if (fn === "find_candidate_documents") {
-        return { data: mockData["candidate_documents"] || [], error: null };
+        return Promise.resolve({ data: mockData["candidate_documents"] || [], error: null });
       }
       if (fn === "get_document_content") {
-        return { data: mockData["document_content"] || [], error: null };
+        return Promise.resolve({ data: mockData["document_content"] || [], error: null });
       }
-      return { data: null, error: null };
+      return Promise.resolve({ data: null, error: null });
     },
     storage: {
       from: () => ({
-        upload: async () => ({ data: { path: "test/path" }, error: null }),
-        download: async () => ({ data: new Blob(), error: null }),
-        remove: async () => ({ data: null, error: null }),
+        upload: () => Promise.resolve({ data: { path: "test/path" }, error: null }),
+        download: () => Promise.resolve({ data: new Blob(), error: null }),
+        remove: () => Promise.resolve({ data: null, error: null }),
       }),
     },
     auth: {
-      getUser: async () => ({
-        data: { user: { id: "test-user-id" } },
-        error: null,
-      }),
+      getUser: () =>
+        Promise.resolve({
+          data: { user: { id: "test-user-id" } },
+          error: null,
+        }),
     },
   };
 }

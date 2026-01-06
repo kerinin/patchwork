@@ -66,7 +66,7 @@ export async function createEmbeddings(texts: string[]): Promise<EmbeddingRespon
 
   // Use mock embeddings if no API key or in mock mode
   if (!apiKey || mockMode) {
-    return texts.map(text => ({
+    return texts.map((text) => ({
       embedding: createMockEmbedding(text),
       tokens: Math.ceil(text.length / 4),
     }));
@@ -91,7 +91,7 @@ export async function createEmbeddings(texts: string[]): Promise<EmbeddingRespon
 
   const data = await response.json();
 
-  return data.data.map((item: { embedding: number[] }, index: number) => ({
+  return data.data.map((item: { embedding: number[] }, _index: number) => ({
     embedding: item.embedding,
     tokens: Math.floor(data.usage.total_tokens / texts.length), // approximate per-text
   }));

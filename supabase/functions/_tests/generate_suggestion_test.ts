@@ -5,23 +5,17 @@ import {
   assertExists,
   assertStringIncludes,
 } from "https://deno.land/std@0.177.0/testing/asserts.ts";
-import {
-  afterAll,
-  beforeAll,
-  describe,
-  it,
-} from "https://deno.land/std@0.177.0/testing/bdd.ts";
+import { afterAll, beforeAll, describe, it } from "https://deno.land/std@0.177.0/testing/bdd.ts";
 
 import {
-  createServiceClient,
-  createTestUser,
-  createTestFixtures,
-  cleanupTestUser,
   callFunction,
+  cleanupTestUser,
   createMockEmbedding,
-  createSimilarEmbedding,
-  TestUser,
+  createServiceClient,
+  createTestFixtures,
+  createTestUser,
   TestFixtures,
+  TestUser,
 } from "./test_helpers.ts";
 import { mockOpenAIEmbeddings } from "./mocks.ts";
 
@@ -51,7 +45,7 @@ describe("generate-suggestion", () => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ patch_id: fixtures.patch.id }),
-        }
+        },
       );
 
       assertEquals(response.status, 401);
@@ -62,7 +56,7 @@ describe("generate-suggestion", () => {
       const { status } = await callFunction(
         "generate-suggestion",
         { patch_id: fixtures.patch.id },
-        "invalid-token"
+        "invalid-token",
       );
 
       assertEquals(status, 401);
@@ -74,7 +68,7 @@ describe("generate-suggestion", () => {
       const { status, data } = await callFunction(
         "generate-suggestion",
         {},
-        testUser.accessToken
+        testUser.accessToken,
       );
 
       assertEquals(status, 400);
@@ -85,7 +79,7 @@ describe("generate-suggestion", () => {
       const { status } = await callFunction(
         "generate-suggestion",
         { patch_id: "00000000-0000-0000-0000-000000000000" },
-        testUser.accessToken
+        testUser.accessToken,
       );
 
       assertEquals(status, 404);
@@ -119,7 +113,7 @@ describe("generate-suggestion", () => {
       const { status, data } = await callFunction(
         "generate-suggestion",
         { patch_id: patch.id },
-        emptyUser.accessToken
+        emptyUser.accessToken,
       );
 
       assertEquals(status, 200);
@@ -165,11 +159,13 @@ describe("generate-suggestion", () => {
       const { status, data } = await callFunction(
         "generate-suggestion",
         { patch_id: patch.id },
-        testUser.accessToken
+        testUser.accessToken,
       );
 
       assertEquals(status, 200);
-      const suggestion = (data as { suggestion: { type: string; document_id?: string; confidence: number } }).suggestion;
+      const suggestion =
+        (data as { suggestion: { type: string; document_id?: string; confidence: number } })
+          .suggestion;
 
       // Should suggest appending to Chapter 6 with high confidence
       if (suggestion.type !== "none") {
@@ -229,11 +225,12 @@ describe("generate-suggestion", () => {
       const { status, data } = await callFunction(
         "generate-suggestion",
         { patch_id: patch2.id },
-        testUser.accessToken
+        testUser.accessToken,
       );
 
       assertEquals(status, 200);
-      const suggestion = (data as { suggestion: { type: string; document_id?: string } }).suggestion;
+      const suggestion =
+        (data as { suggestion: { type: string; document_id?: string } }).suggestion;
 
       // Should suggest same document as patch1
       if (suggestion.type !== "none" && suggestion.document_id) {
@@ -290,7 +287,7 @@ describe("generate-suggestion", () => {
       const { status, data } = await callFunction(
         "generate-suggestion",
         { patch_id: newPatch.id },
-        testUser.accessToken
+        testUser.accessToken,
       );
 
       assertEquals(status, 200);
@@ -345,7 +342,7 @@ describe("generate-suggestion", () => {
       const { status, data } = await callFunction(
         "generate-suggestion",
         { patch_id: newPatch.id },
-        testUser.accessToken
+        testUser.accessToken,
       );
 
       assertEquals(status, 200);
@@ -364,20 +361,22 @@ describe("generate-suggestion", () => {
       const { status, data } = await callFunction(
         "generate-suggestion",
         { patch_id: fixtures.patch.id },
-        testUser.accessToken
+        testUser.accessToken,
       );
 
       assertEquals(status, 200);
 
-      const response = data as { suggestion: {
-        type: string;
-        reasoning: string;
-        confidence: number;
-        document_id?: string;
-        document_name?: string;
-        position?: string;
-        replace_spans?: string[];
-      }};
+      const response = data as {
+        suggestion: {
+          type: string;
+          reasoning: string;
+          confidence: number;
+          document_id?: string;
+          document_name?: string;
+          position?: string;
+          replace_spans?: string[];
+        };
+      };
 
       assertExists(response.suggestion);
       assertExists(response.suggestion.type);
@@ -413,7 +412,7 @@ describe("generate-suggestion", () => {
       await callFunction(
         "generate-suggestion",
         { patch_id: patch.id },
-        testUser.accessToken
+        testUser.accessToken,
       );
 
       // Fetch the patch and verify embedding was stored

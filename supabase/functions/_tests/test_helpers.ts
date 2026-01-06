@@ -109,7 +109,10 @@ export async function createTestUser(_serviceClient: SupabaseClient): Promise<Te
 }
 
 // Clean up test user and all their data
-export async function cleanupTestUser(serviceClient: SupabaseClient, userId: string): Promise<void> {
+export async function cleanupTestUser(
+  serviceClient: SupabaseClient,
+  userId: string,
+): Promise<void> {
   // Delete in order respecting foreign keys
   await serviceClient.from("annotations").delete().eq("user_id", userId);
   await serviceClient.from("spans").delete().match({ "documents.user_id": userId });
@@ -133,7 +136,7 @@ export interface TestFixtures {
 // Create standard test fixtures for a user
 export async function createTestFixtures(
   client: SupabaseClient,
-  userId: string
+  userId: string,
 ): Promise<TestFixtures> {
   // Create folder
   const { data: folder, error: folderError } = await client
@@ -186,7 +189,9 @@ export async function createTestFixtures(
     .select()
     .single();
 
-  if (embedPatchError) throw new Error(`Failed to create embedded patch: ${embedPatchError.message}`);
+  if (embedPatchError) {
+    throw new Error(`Failed to create embedded patch: ${embedPatchError.message}`);
+  }
 
   return {
     folder: { id: folder.id, name: folder.name },
@@ -204,7 +209,7 @@ export async function createTestFixtures(
 export async function callFunction(
   functionName: string,
   body: Record<string, unknown>,
-  accessToken: string
+  accessToken: string,
 ): Promise<{ status: number; data: unknown }> {
   const response = await fetch(`${TEST_CONFIG.functionsUrl}/${functionName}`, {
     method: "POST",
@@ -220,7 +225,10 @@ export async function callFunction(
 }
 
 // Assert helpers
-export function assertDefined<T>(value: T | undefined | null, message?: string): asserts value is T {
+export function assertDefined<T>(
+  value: T | undefined | null,
+  message?: string,
+): asserts value is T {
   if (value === undefined || value === null) {
     throw new Error(message || "Expected value to be defined");
   }

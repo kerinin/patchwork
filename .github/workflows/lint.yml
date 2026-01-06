@@ -1,0 +1,46 @@
+name: Lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-backend:
+    name: Lint Backend (Deno)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+
+      - name: Check Formatting
+        run: deno fmt --check
+        working-directory: supabase/functions
+
+      - name: Lint
+        run: deno lint
+        working-directory: supabase/functions
+
+  # Frontend linting will be added when patchwork-app is set up
+  # lint-frontend:
+  #   name: Lint Frontend
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: '20'
+  #         cache: 'npm'
+  #         cache-dependency-path: patchwork-app/package-lock.json
+  #     - run: npm ci
+  #       working-directory: patchwork-app
+  #     - run: npm run lint
+  #       working-directory: patchwork-app
+  #     - run: npm run check
+  #       working-directory: patchwork-app

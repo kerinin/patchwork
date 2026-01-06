@@ -36,7 +36,7 @@ serve(async (req) => {
     if (!typed_content_id) {
       return new Response(
         JSON.stringify({ error: "typed_content_id is required" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
+        { status: 400, headers: { "Content-Type": "application/json" } },
       );
     }
 
@@ -79,7 +79,7 @@ serve(async (req) => {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
         },
-      }
+      },
     );
   } catch (error) {
     console.error("Error:", error);
