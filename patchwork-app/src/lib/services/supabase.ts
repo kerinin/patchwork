@@ -103,11 +103,13 @@ export async function checkConnection(): Promise<ConnectionStatus> {
 		};
 	}
 	try {
-		// Simple health check - just verify the API is reachable
-		// We don't require an auth session, just that Supabase responds
-		const response = await fetch(`${supabaseUrl}/rest/v1/`, {
+		// Simple health check - query a table with limit=0
+		// The root /rest/v1/ endpoint returns 401 on hosted Supabase with anon key
+		// but table queries work fine
+		const response = await fetch(`${supabaseUrl}/rest/v1/patches?limit=0`, {
 			headers: {
-				apikey: supabaseAnonKey
+				apikey: supabaseAnonKey,
+				Authorization: `Bearer ${supabaseAnonKey}`
 			}
 		});
 		if (!response.ok) {
