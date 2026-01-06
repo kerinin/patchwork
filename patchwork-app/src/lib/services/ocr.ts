@@ -1,4 +1,4 @@
-import { createWorker, type Worker } from 'tesseract.js';
+import { createWorker, type Worker, type Word } from 'tesseract.js';
 import type { OcrResult, OcrWord } from '$lib/types/models';
 
 /**
@@ -30,6 +30,24 @@ async function getWorker(): Promise<Worker> {
 }
 
 /**
+ * Extracts all words from Tesseract Page result.
+ * Words are nested: blocks -> paragraphs -> lines -> words
+ */
+function extractWords(data: { blocks: { paragraphs: { lines: { words: Word[] }[] }[] }[] | null }): Word[] {
+	const words: Word[] = [];
+	if (!data.blocks) return words;
+
+	for (const block of data.blocks) {
+		for (const paragraph of block.paragraphs) {
+			for (const line of paragraph.lines) {
+				words.push(...line.words);
+			}
+		}
+	}
+	return words;
+}
+
+/**
  * Performs OCR on an image file or blob.
  */
 export async function performOcr(image: string | File | Blob): Promise<OcrResult> {
@@ -37,7 +55,8 @@ export async function performOcr(image: string | File | Blob): Promise<OcrResult
 
 	const { data } = await worker.recognize(image);
 
-	const words: OcrWord[] = (data.words ?? []).map((word) => ({
+	const rawWords = extractWords(data);
+	const words: OcrWord[] = rawWords.map((word) => ({
 		text: word.text,
 		confidence: word.confidence,
 		bounding_box: {

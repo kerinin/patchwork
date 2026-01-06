@@ -28,9 +28,21 @@ describe('ocr service', () => {
 				data: {
 					text: 'Hello World',
 					confidence: 95,
-					words: [
-						{ text: 'Hello', confidence: 97, bbox: { x0: 0, y0: 0, x1: 50, y1: 20 } },
-						{ text: 'World', confidence: 93, bbox: { x0: 60, y0: 0, x1: 110, y1: 20 } }
+					blocks: [
+						{
+							paragraphs: [
+								{
+									lines: [
+										{
+											words: [
+												{ text: 'Hello', confidence: 97, bbox: { x0: 0, y0: 0, x1: 50, y1: 20 } },
+												{ text: 'World', confidence: 93, bbox: { x0: 60, y0: 0, x1: 110, y1: 20 } }
+											]
+										}
+									]
+								}
+							]
+						}
 					]
 				}
 			});
@@ -46,6 +58,22 @@ describe('ocr service', () => {
 				confidence: 97,
 				bounding_box: { x: 0, y: 0, width: 50, height: 20 }
 			});
+		});
+
+		it('should handle empty blocks gracefully', async () => {
+			mockWorker.recognize.mockResolvedValueOnce({
+				data: {
+					text: '',
+					confidence: 0,
+					blocks: null
+				}
+			});
+
+			const { performOcr } = await import('./ocr');
+			const result = await performOcr('blank-image.jpg');
+
+			expect(result.text).toBe('');
+			expect(result.words).toHaveLength(0);
 		});
 
 		it('should handle OCR failure gracefully', async () => {
@@ -145,7 +173,21 @@ describe('ocr service', () => {
 				data: {
 					text: 'Test',
 					confidence: 95,
-					words: [{ text: 'Test', confidence: 95, bbox: { x0: 0, y0: 0, x1: 10, y1: 10 } }]
+					blocks: [
+						{
+							paragraphs: [
+								{
+									lines: [
+										{
+											words: [
+												{ text: 'Test', confidence: 95, bbox: { x0: 0, y0: 0, x1: 10, y1: 10 } }
+											]
+										}
+									]
+								}
+							]
+						}
+					]
 				}
 			});
 
