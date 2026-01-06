@@ -29,7 +29,7 @@
 			// Load all patches for "All Patches" view
 			const all = await patchesApi.list();
 			allPatches = all;
-		} catch (e) {
+		} catch (e: unknown) {
 			console.error('Failed to load patches:', e);
 		}
 	}
@@ -52,6 +52,7 @@
 			<h2 class="font-document text-2xl font-bold text-ink">Import</h2>
 			<div class="flex gap-2">
 				<button
+					type="button"
 					class="rounded-lg px-3 py-1.5 text-sm font-medium transition-colors"
 					class:bg-accent={!showAll}
 					class:text-white={!showAll}
@@ -62,6 +63,7 @@
 					Needs Review
 				</button>
 				<button
+					type="button"
 					class="rounded-lg px-3 py-1.5 text-sm font-medium transition-colors"
 					class:bg-accent={showAll}
 					class:text-white={showAll}
