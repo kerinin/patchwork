@@ -2,9 +2,9 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 
-	// Redirect to inbox by default
+	// Redirect to import by default
 	onMount(() => {
-		goto('/inbox');
+		goto('/import');
 	});
 </script>
 

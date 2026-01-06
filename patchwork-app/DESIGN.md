@@ -26,7 +26,7 @@ patchwork-app/
 │   │   ├── services/        # supabase.ts, tauri.ts
 │   │   └── types/           # TypeScript interfaces
 │   ├── routes/
-│   │   ├── inbox/           # Review patches, accept suggestions
+│   │   ├── import/          # Review patches, accept suggestions
 │   │   ├── assemble/        # Position patches in documents
 │   │   └── editor/          # View/edit documents, export
 │   └── tests/               # Test setup
@@ -124,7 +124,7 @@ import { folders, documents, patches, spans, annotations, storage } from '$servi
 import { generateSuggestion, applyPatch } from '$services/functions';
 
 // CRUD operations
-const allPatches = await patches.list('inbox');
+const allPatches = await patches.list('import');
 const doc = await documents.get(id);
 await folders.create({ user_id, name, position: 'a' });
 
