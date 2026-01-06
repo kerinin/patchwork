@@ -81,11 +81,71 @@ Configured in `svelte.config.js`:
 - Run with `npm test` (Vitest)
 - Setup file: `src/tests/setup.ts`
 
+## Container Runtime
+
+This project uses **Podman** (not Docker) for local Supabase development.
+
+```bash
+# Check Supabase status
+supabase status
+
+# If containers are stopped, restart them
+supabase start
+
+# View container logs
+podman logs supabase_db_writer
+```
+
 ## Environment Variables
 
-Copy `.env.example` to `.env` and configure:
+Copy `.env.example` to `.env` and configure for local or remote backend:
 
-```
+```bash
+# Backend Mode: "local" or "remote"
+PUBLIC_BACKEND_MODE=local
+
+# Local Development (default)
+PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+PUBLIC_FUNCTIONS_URL=http://127.0.0.1:54321/functions/v1
+
+# Remote Production
 PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+PUBLIC_FUNCTIONS_URL=https://your-project.supabase.co/functions/v1
+```
+
+## Supabase Services
+
+The `$services/supabase.ts` module provides type-safe API wrappers:
+
+```typescript
+import { folders, documents, patches, spans, annotations, storage } from '$services/supabase';
+import { generateSuggestion, applyPatch } from '$services/functions';
+
+// CRUD operations
+const allPatches = await patches.list('inbox');
+const doc = await documents.get(id);
+await folders.create({ user_id, name, position: 'a' });
+
+// Edge functions
+const suggestion = await generateSuggestion(patchId);
+await applyPatch({ patch_id, document_id, operation: 'append' });
+```
+
+## Stores with Backend Integration
+
+Stores in `$stores/` wrap Supabase API with reactive state:
+
+```typescript
+import { loadInboxPatches, patches, selectedPatch } from '$stores/patches';
+import { loadDocuments, selectDocument } from '$stores/documents';
+
+// Load data
+await loadInboxPatches();
+await loadDocuments(folderId);
+
+// Subscribe to realtime changes
+subscribeToPatches();
+subscribeToDocuments();
 ```

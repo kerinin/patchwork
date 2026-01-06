@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import ConnectionStatus from '$components/ui/ConnectionStatus.svelte';
 
 	const modes = [
 		{ name: 'Inbox', path: '/inbox', description: 'Review scanned patches' },
@@ -26,7 +27,7 @@
 	</nav>
 
 	<div class="flex items-center gap-4">
-		<!-- Placeholder for scanner button and user menu -->
+		<ConnectionStatus />
 		<button class="rounded-lg bg-accent px-4 py-2 text-white transition-colors hover:bg-accent/90">
 			Scan
 		</button>
