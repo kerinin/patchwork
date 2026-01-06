@@ -228,7 +228,7 @@ describe('supabase service', () => {
 			{
 				id: 'p1',
 				user_id: 'u1',
-				status: 'inbox',
+				status: 'needs_review',
 				image_path: '/path/1.jpg',
 				original_filename: 'scan1.jpg',
 				import_batch_id: 'batch1',
@@ -246,9 +246,9 @@ describe('supabase service', () => {
 			const mockBuilder = createMockQueryBuilder(mockPatches);
 			mockClient.from.mockReturnValueOnce(mockBuilder);
 
-			const patches = await supabaseModule.patches.list('inbox');
+			const patches = await supabaseModule.patches.list('needs_review');
 
-			expect(mockBuilder.eq).toHaveBeenCalledWith('status', 'inbox');
+			expect(mockBuilder.eq).toHaveBeenCalledWith('status', 'needs_review');
 			expect(patches).toEqual(mockPatches);
 		});
 
@@ -262,19 +262,19 @@ describe('supabase service', () => {
 		});
 
 		it('should update patch status with timestamp', async () => {
-			const updatedPatch = { ...mockPatches[0], status: 'review' as const, reviewed_at: expect.any(String) };
+			const updatedPatch = { ...mockPatches[0], status: 'needs_review' as const, reviewed_at: expect.any(String) };
 			const mockBuilder = createMockQueryBuilder(updatedPatch);
 			mockClient.from.mockReturnValueOnce(mockBuilder);
 
-			const result = await supabaseModule.patches.updateStatus('p1', 'review');
+			const result = await supabaseModule.patches.updateStatus('p1', 'needs_review');
 
 			expect(mockBuilder.update).toHaveBeenCalledWith(
 				expect.objectContaining({
-					status: 'review',
+					status: 'needs_review',
 					reviewed_at: expect.any(String)
 				})
 			);
-			expect(result.status).toBe('review');
+			expect(result.status).toBe('needs_review');
 		});
 
 		it('should set applied_at when status is applied', async () => {

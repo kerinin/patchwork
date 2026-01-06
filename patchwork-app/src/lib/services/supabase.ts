@@ -273,7 +273,7 @@ export const patches = {
 	},
 
 	async listInbox(): Promise<Patch[]> {
-		return patches.list('inbox');
+		return patches.list('needs_review');
 	},
 
 	async get(id: string): Promise<Patch | null> {
@@ -308,7 +308,7 @@ export const patches = {
 
 	async updateStatus(id: string, status: PatchStatus): Promise<Patch> {
 		const updates: PatchUpdate = { status };
-		if (status === 'review') {
+		if (status === 'needs_review') {
 			updates.reviewed_at = new Date().toISOString();
 		} else if (status === 'applied') {
 			updates.applied_at = new Date().toISOString();

@@ -33,7 +33,7 @@ export interface Document {
 	updated_at: string;
 }
 
-export type PatchStatus = 'inbox' | 'review' | 'ready' | 'applied' | 'discarded';
+export type PatchStatus = 'processing' | 'needs_review' | 'ocr_complete' | 'ready' | 'applied' | 'discarded';
 
 export interface Patch {
 	id: string;

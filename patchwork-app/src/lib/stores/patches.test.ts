@@ -7,7 +7,7 @@ const mockPatches: Patch[] = [
 	{
 		id: 'p1',
 		user_id: 'u1',
-		status: 'inbox',
+		status: 'needs_review',
 		image_path: '/path/1.jpg',
 		original_filename: 'scan1.jpg',
 		import_batch_id: 'batch1',
@@ -22,7 +22,7 @@ const mockPatches: Patch[] = [
 	{
 		id: 'p2',
 		user_id: 'u1',
-		status: 'inbox',
+		status: 'needs_review',
 		image_path: '/path/2.jpg',
 		original_filename: 'scan2.jpg',
 		import_batch_id: 'batch1',
@@ -112,12 +112,12 @@ describe('patches store', () => {
 		});
 
 		it('should load patches filtered by status', async () => {
-			const inboxPatches = mockPatches.filter((p) => p.status === 'inbox');
+			const inboxPatches = mockPatches.filter((p) => p.status === 'needs_review');
 			mockPatchesApi.list.mockResolvedValueOnce(inboxPatches);
 
-			await storeModule.loadPatches('inbox');
+			await storeModule.loadPatches('needs_review');
 
-			expect(mockPatchesApi.list).toHaveBeenCalledWith('inbox');
+			expect(mockPatchesApi.list).toHaveBeenCalledWith('needs_review');
 			expect(get(storeModule.patches)).toEqual(inboxPatches);
 		});
 
@@ -163,12 +163,12 @@ describe('patches store', () => {
 	});
 
 	describe('loadInboxPatches', () => {
-		it('should call loadPatches with inbox status', async () => {
+		it('should call loadPatches with needs_review status', async () => {
 			mockPatchesApi.list.mockResolvedValueOnce(mockPatches);
 
 			await storeModule.loadInboxPatches();
 
-			expect(mockPatchesApi.list).toHaveBeenCalledWith('inbox');
+			expect(mockPatchesApi.list).toHaveBeenCalledWith('needs_review');
 		});
 	});
 
@@ -202,45 +202,45 @@ describe('patches store', () => {
 
 	describe('updatePatchStatus', () => {
 		it('should update patch status and local store', async () => {
-			const updatedPatch = { ...mockPatches[0], status: 'review' as const };
+			const updatedPatch = { ...mockPatches[0], status: 'ready' as const };
 			mockPatchesApi.updateStatus.mockResolvedValueOnce(updatedPatch);
 			storeModule.patches.set([...mockPatches]);
 
-			const result = await storeModule.updatePatchStatus('p1', 'review');
+			const result = await storeModule.updatePatchStatus('p1', 'ready');
 
-			expect(mockPatchesApi.updateStatus).toHaveBeenCalledWith('p1', 'review');
+			expect(mockPatchesApi.updateStatus).toHaveBeenCalledWith('p1', 'ready');
 			expect(result).toEqual(updatedPatch);
-			expect(get(storeModule.patches)[0].status).toBe('review');
+			expect(get(storeModule.patches)[0].status).toBe('ready');
 		});
 
 		it('should update selected patch if it matches', async () => {
-			const updatedPatch = { ...mockPatches[0], status: 'review' as const };
+			const updatedPatch = { ...mockPatches[0], status: 'ready' as const };
 			mockPatchesApi.updateStatus.mockResolvedValueOnce(updatedPatch);
 			storeModule.patches.set([...mockPatches]);
 			storeModule.selectedPatch.set(mockPatches[0]);
 
-			await storeModule.updatePatchStatus('p1', 'review');
+			await storeModule.updatePatchStatus('p1', 'ready');
 
-			expect(get(storeModule.selectedPatch)?.status).toBe('review');
+			expect(get(storeModule.selectedPatch)?.status).toBe('ready');
 		});
 
 		it('should not update selected patch if it does not match', async () => {
-			const updatedPatch = { ...mockPatches[0], status: 'review' as const };
+			const updatedPatch = { ...mockPatches[0], status: 'ready' as const };
 			mockPatchesApi.updateStatus.mockResolvedValueOnce(updatedPatch);
 			storeModule.patches.set([...mockPatches]);
 			storeModule.selectedPatch.set(mockPatches[1]); // Different patch
 
-			await storeModule.updatePatchStatus('p1', 'review');
+			await storeModule.updatePatchStatus('p1', 'ready');
 
 			expect(get(storeModule.selectedPatch)?.id).toBe('p2');
-			expect(get(storeModule.selectedPatch)?.status).toBe('inbox');
+			expect(get(storeModule.selectedPatch)?.status).toBe('needs_review');
 		});
 
 		it('should return null on error', async () => {
 			mockPatchesApi.updateStatus.mockRejectedValueOnce(new Error('Update failed'));
 			storeModule.patches.set([...mockPatches]);
 
-			const result = await storeModule.updatePatchStatus('p1', 'review');
+			const result = await storeModule.updatePatchStatus('p1', 'ready');
 
 			expect(result).toBeNull();
 		});
@@ -248,7 +248,7 @@ describe('patches store', () => {
 		it('should return null when supabase unavailable', async () => {
 			mockIsSupabaseAvailable.mockReturnValue(false);
 
-			const result = await storeModule.updatePatchStatus('p1', 'review');
+			const result = await storeModule.updatePatchStatus('p1', 'ready');
 
 			expect(result).toBeNull();
 		});

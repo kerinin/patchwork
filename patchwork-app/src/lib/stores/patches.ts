@@ -44,10 +44,10 @@ export async function loadPatches(status?: PatchStatus): Promise<void> {
 }
 
 /**
- * Load inbox patches (status = 'inbox').
+ * Load inbox patches (status = 'needs_review').
  */
 export async function loadInboxPatches(): Promise<void> {
-	return loadPatches('inbox');
+	return loadPatches('needs_review');
 }
 
 /**
