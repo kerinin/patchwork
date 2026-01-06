@@ -97,4 +97,74 @@ describe('ocr service', () => {
 			expect(needsReview(result)).toBe(true);
 		});
 	});
+
+	describe('getLowConfidenceWords', () => {
+		it('should return words with confidence below 75%', async () => {
+			const { getLowConfidenceWords } = await import('./ocr');
+
+			const result: OcrResult = {
+				text: 'Good Bad Ugly',
+				confidence: 80,
+				words: [
+					{ text: 'Good', confidence: 95, bounding_box: { x: 0, y: 0, width: 10, height: 10 } },
+					{ text: 'Bad', confidence: 60, bounding_box: { x: 20, y: 0, width: 10, height: 10 } },
+					{ text: 'Ugly', confidence: 50, bounding_box: { x: 40, y: 0, width: 10, height: 10 } }
+				]
+			};
+
+			const lowConfidenceWords = getLowConfidenceWords(result);
+
+			expect(lowConfidenceWords).toHaveLength(2);
+			expect(lowConfidenceWords[0].text).toBe('Bad');
+			expect(lowConfidenceWords[1].text).toBe('Ugly');
+		});
+
+		it('should return empty array when all words have high confidence', async () => {
+			const { getLowConfidenceWords } = await import('./ocr');
+
+			const result: OcrResult = {
+				text: 'All Good Here',
+				confidence: 95,
+				words: [
+					{ text: 'All', confidence: 90, bounding_box: { x: 0, y: 0, width: 10, height: 10 } },
+					{ text: 'Good', confidence: 95, bounding_box: { x: 20, y: 0, width: 10, height: 10 } },
+					{ text: 'Here', confidence: 88, bounding_box: { x: 40, y: 0, width: 10, height: 10 } }
+				]
+			};
+
+			const lowConfidenceWords = getLowConfidenceWords(result);
+
+			expect(lowConfidenceWords).toHaveLength(0);
+		});
+	});
+
+	describe('terminateOcr', () => {
+		it('should call worker.terminate() when worker exists', async () => {
+			// First, initialize a worker by calling performOcr
+			mockWorker.recognize.mockResolvedValueOnce({
+				data: {
+					text: 'Test',
+					confidence: 95,
+					words: [{ text: 'Test', confidence: 95, bbox: { x0: 0, y0: 0, x1: 10, y1: 10 } }]
+				}
+			});
+
+			const { performOcr, terminateOcr } = await import('./ocr');
+			await performOcr('test-image.jpg');
+
+			// Now terminate
+			await terminateOcr();
+
+			expect(mockWorker.terminate).toHaveBeenCalledOnce();
+		});
+
+		it('should do nothing when no worker exists', async () => {
+			const { terminateOcr } = await import('./ocr');
+
+			// Call terminate without initializing a worker first
+			await terminateOcr();
+
+			expect(mockWorker.terminate).not.toHaveBeenCalled();
+		});
+	});
 });
