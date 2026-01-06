@@ -169,3 +169,12 @@ export function processQueue(): void {
 	// Set processing state to true to indicate queue is being processed
 	importState.setProcessing(true);
 }
+
+/**
+ * Retry a failed import item.
+ * Resets its status to pending so it can be reprocessed.
+ */
+export function retryItem(id: string): void {
+	importState.updateItem(id, { status: 'pending', error: undefined, progress: 0 });
+	processQueue();
+}
