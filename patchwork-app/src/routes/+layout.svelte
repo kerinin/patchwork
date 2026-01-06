@@ -2,6 +2,7 @@
 	import '../app.css';
 	import Sidebar from '$components/layout/Sidebar.svelte';
 	import TopBar from '$components/layout/TopBar.svelte';
+	import ImportStatus from '$lib/components/import/ImportStatus.svelte';
 
 	let { children } = $props();
 </script>
@@ -25,3 +26,5 @@
 		</main>
 	</div>
 </div>
+
+<ImportStatus />
