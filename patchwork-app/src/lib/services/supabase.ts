@@ -505,10 +505,22 @@ export const annotations = {
 // STORAGE API
 // ============================================================================
 
+/**
+ * Sanitize a filename for Supabase storage.
+ * Replaces spaces and special characters with underscores.
+ */
+function sanitizeFilename(filename: string): string {
+	return filename
+		.replace(/[\s\u00A0\u202F]+/g, '_') // Replace whitespace (including non-breaking spaces)
+		.replace(/[^a-zA-Z0-9._-]/g, '_') // Replace any other special chars
+		.replace(/_+/g, '_'); // Collapse multiple underscores
+}
+
 export const storage = {
 	async uploadPatchImage(userId: string, file: File, filename?: string): Promise<string> {
 		const client = getSupabase();
-		const path = `${userId}/${filename || file.name}`;
+		const sanitizedName = sanitizeFilename(filename || file.name);
+		const path = `${userId}/${sanitizedName}`;
 		const { error } = await client.storage.from('patches').upload(path, file, {
 			cacheControl: '3600',
 			upsert: false
