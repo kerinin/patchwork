@@ -1,9 +1,20 @@
 import { writable, derived, get } from 'svelte/store';
 import { browser } from '$app/environment';
 import { storage, patches } from '$lib/services/supabase';
-import { performOcr, needsReview } from '$lib/services/ocr';
+import { performOcr, needsReview, isVlmReady, preloadVlm } from '$lib/services/ocr';
 import { getCurrentUserId } from '$lib/services/auth';
 import type { PatchStatus, ConfidenceData } from '$lib/types/models';
+
+// VLM model loading state
+export const vlmLoadingState = writable<{
+	isLoading: boolean;
+	status: string;
+	progress: number;
+}>({
+	isLoading: false,
+	status: '',
+	progress: 0
+});
 
 // Accepted image types - common formats people would upload
 const ACCEPTED_TYPES = [
@@ -231,10 +242,22 @@ async function processItem(item: ImportItem): Promise<void> {
 			suggested_action: null
 		});
 
-		// Step 3: Run OCR
+		// Step 3: Run OCR (VLM with Tesseract fallback)
 		importState.updateItem(item.id, { progress: 50 });
 
-		const ocrResult = await performOcr(item.file);
+		// Show VLM loading progress if model not yet loaded
+		const ocrResult = await performOcr(item.file, {
+			onProgress: (status, progress) => {
+				vlmLoadingState.set({
+					isLoading: true,
+					status,
+					progress: progress ?? 0
+				});
+			}
+		});
+
+		// Clear VLM loading state
+		vlmLoadingState.set({ isLoading: false, status: '', progress: 0 });
 
 		// Step 4: Determine status based on OCR confidence
 		const status: PatchStatus = needsReview(ocrResult) ? 'needs_review' : 'ready';
@@ -272,4 +295,24 @@ async function processItem(item: ImportItem): Promise<void> {
 export function retryItem(id: string): void {
 	importState.updateItem(id, { status: 'pending', error: undefined, progress: 0 });
 	processQueue();
+}
+
+/**
+ * Preload the VLM model to avoid delay on first import.
+ * Call this early (e.g., when navigating to import page).
+ */
+export async function preloadOcrModel(): Promise<void> {
+	if (isVlmReady()) return;
+
+	vlmLoadingState.set({ isLoading: true, status: 'Initializing...', progress: 0 });
+
+	await preloadVlm((status, progress) => {
+		vlmLoadingState.set({
+			isLoading: true,
+			status,
+			progress: progress ?? 0
+		});
+	});
+
+	vlmLoadingState.set({ isLoading: false, status: '', progress: 0 });
 }

@@ -2,9 +2,20 @@
  * Integration tests for the import flow.
  * These tests run against a real local Supabase instance.
  *
+ * CRITICAL: These tests verify that:
+ * 1. Dev user authentication works (catches "Invalid login credentials" errors)
+ * 2. Storage uploads work with authenticated user
+ * 3. Patch CRUD operations work
+ *
+ * If the dev user doesn't exist, tests will FAIL in beforeAll with:
+ * "Auth setup failed: Invalid login credentials"
+ *
  * Prerequisites:
- * - Supabase must be running: `supabase start`
- * - Database must be seeded: `supabase db reset`
+ * - Supabase must be running: `supabase start` (from ../supabase directory)
+ * - Database must be seeded: `supabase db reset` (creates dev user)
+ *
+ * Note: These tests call Supabase directly, not through the app's import store.
+ * For full E2E testing through the UI, use Playwright (not yet implemented).
  *
  * Run with: npm test -- src/tests/integration/
  *

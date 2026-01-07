@@ -2,7 +2,14 @@
 	import { onMount } from 'svelte';
 	import DropZone from '$lib/components/import/DropZone.svelte';
 	import PatchCard from '$lib/components/import/PatchCard.svelte';
-	import { importState, processingItems, hasErrors, retryItem } from '$lib/stores/import';
+	import {
+		importState,
+		processingItems,
+		hasErrors,
+		retryItem,
+		vlmLoadingState,
+		preloadOcrModel
+	} from '$lib/stores/import';
 	import { patches as patchesApi } from '$lib/services/supabase';
 	import type { Patch } from '$lib/types/models';
 
@@ -15,9 +22,11 @@
 	let importStoreState = $derived($importState);
 	let processing = $derived($processingItems);
 	let errors = $derived($hasErrors);
+	let vlmLoading = $derived($vlmLoadingState);
 
 	onMount(async () => {
-		await loadPatches();
+		// Start loading patches and preload VLM model in parallel
+		const [_] = await Promise.all([loadPatches(), preloadOcrModel()]);
 		loading = false;
 	});
 
@@ -77,6 +86,29 @@
 			</div>
 		</div>
 
+		<!-- VLM Model Loading -->
+		{#if vlmLoading.isLoading}
+			<div class="rounded-lg border border-blue-300 bg-blue-50 p-4">
+				<div class="flex items-center gap-2">
+					<div
+						class="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"
+					></div>
+					<p class="text-sm font-medium text-blue-700">{vlmLoading.status}</p>
+				</div>
+				{#if vlmLoading.progress > 0}
+					<div class="mt-2 h-2 overflow-hidden rounded-full bg-blue-200">
+						<div
+							class="h-full bg-blue-500 transition-all duration-300"
+							style="width: {vlmLoading.progress * 100}%"
+						></div>
+					</div>
+					<p class="mt-1 text-right text-xs text-blue-600">
+						{(vlmLoading.progress * 100).toFixed(0)}%
+					</p>
+				{/if}
+			</div>
+		{/if}
+
 		<!-- Processing items -->
 		{#if processing.length > 0}
 			<div class="rounded-lg border border-accent/30 bg-highlight/50 p-4">
@@ -84,7 +116,9 @@
 				<div class="mt-2 space-y-1">
 					{#each processing as item}
 						<div class="flex items-center gap-2 text-sm text-ink-light">
-							<div class="h-3 w-3 animate-spin rounded-full border border-accent border-t-transparent"></div>
+							<div
+								class="h-3 w-3 animate-spin rounded-full border border-accent border-t-transparent"
+							></div>
 							{item.file.name}
 						</div>
 					{/each}
