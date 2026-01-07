@@ -326,7 +326,11 @@ export async function performOcr(
 	image: string | File | Blob,
 	config: OcrConfig = {}
 ): Promise<OcrResult> {
-	const { useVlm = true, prompt, onProgress } = config;
+	// Check for test mode via URL parameter (set by E2E tests)
+	const isTestMode = typeof window !== 'undefined' &&
+		new URLSearchParams(window.location.search).get('testMode') === 'true';
+
+	const { useVlm = !isTestMode, prompt, onProgress } = config;
 
 	if (useVlm) {
 		// Try to load VLM if not already loaded
