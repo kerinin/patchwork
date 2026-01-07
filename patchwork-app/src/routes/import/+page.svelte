@@ -134,7 +134,7 @@
 				</p>
 			</div>
 		{:else}
-			<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+			<div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
 				{#each showAll ? allPatches : needsReviewPatches as patch (patch.id)}
 					<PatchCard {patch} />
 				{/each}
