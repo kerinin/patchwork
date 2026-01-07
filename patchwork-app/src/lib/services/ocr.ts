@@ -1,10 +1,9 @@
-import { createWorker, type Worker, type Word } from 'tesseract.js';
 import {
 	AutoProcessor,
 	AutoModelForVision2Seq,
 	RawImage
 } from '@huggingface/transformers';
-import type { OcrResult, OcrWord } from '$lib/types/models';
+import type { OcrResult } from '$lib/types/models';
 
 // Type declarations for WebGPU
 declare global {
@@ -27,8 +26,6 @@ type AnyModel = any;
  * OCR Configuration
  */
 export interface OcrConfig {
-	/** Use VLM (true) or Tesseract (false). Default: true */
-	useVlm?: boolean;
 	/** Custom prompt for VLM extraction */
 	prompt?: string;
 	/** Progress callback for model loading */
@@ -36,10 +33,9 @@ export interface OcrConfig {
 }
 
 /**
- * Confidence thresholds for OCR quality assessment.
+ * Confidence threshold for OCR quality assessment.
  */
-const OVERALL_CONFIDENCE_THRESHOLD = 85;
-const WORD_CONFIDENCE_THRESHOLD = 75;
+const CONFIDENCE_THRESHOLD = 85;
 
 // VLM model configuration
 const VLM_MODEL_ID = 'HuggingFaceTB/SmolVLM-256M-Instruct';
@@ -51,7 +47,7 @@ Output only the extracted text, preserving paragraphs and line breaks.
 Do not describe the image or add any commentary.`;
 
 // ============================================================================
-// VLM OCR (Primary)
+// VLM OCR
 // ============================================================================
 
 let vlmProcessor: AnyProcessor | null = null;
@@ -133,6 +129,16 @@ export async function loadVlmModel(
  */
 export function isVlmReady(): boolean {
 	return vlmProcessor !== null && vlmModel !== null;
+}
+
+/**
+ * Reset VLM state (for testing)
+ */
+export function resetVlmState(): void {
+	vlmProcessor = null;
+	vlmModel = null;
+	vlmLoading = false;
+	vlmLoadError = null;
 }
 
 /**
@@ -254,145 +260,49 @@ async function performVlmOcr(
 }
 
 // ============================================================================
-// Tesseract OCR (Fallback)
-// ============================================================================
-
-let tesseractWorkerPromise: Promise<Worker> | null = null;
-
-/**
- * Gets or creates a Tesseract worker instance.
- */
-async function getTesseractWorker(): Promise<Worker> {
-	if (!tesseractWorkerPromise) {
-		tesseractWorkerPromise = createWorker('eng');
-	}
-	return tesseractWorkerPromise;
-}
-
-/**
- * Extracts all words from Tesseract Page result.
- */
-function extractWords(
-	data: { blocks: { paragraphs: { lines: { words: Word[] }[] }[] }[] | null }
-): Word[] {
-	const words: Word[] = [];
-	if (!data.blocks) return words;
-
-	for (const block of data.blocks) {
-		for (const paragraph of block.paragraphs) {
-			for (const line of paragraph.lines) {
-				words.push(...line.words);
-			}
-		}
-	}
-	return words;
-}
-
-/**
- * Perform OCR using Tesseract
- */
-async function performTesseractOcr(image: string | File | Blob): Promise<OcrResult> {
-	const worker = await getTesseractWorker();
-	const { data } = await worker.recognize(image);
-
-	const rawWords = extractWords(data);
-	const words: OcrWord[] = rawWords.map((word) => ({
-		text: word.text,
-		confidence: word.confidence,
-		bounding_box: {
-			x: word.bbox.x0,
-			y: word.bbox.y0,
-			width: word.bbox.x1 - word.bbox.x0,
-			height: word.bbox.y1 - word.bbox.y0
-		}
-	}));
-
-	return {
-		text: data.text,
-		confidence: data.confidence,
-		words
-	};
-}
-
-// ============================================================================
 // Public API
 // ============================================================================
 
 /**
- * Performs OCR on an image file or blob.
- * Uses VLM by default, falls back to Tesseract if VLM unavailable.
+ * Performs OCR on an image file or blob using VLM.
  */
 export async function performOcr(
 	image: string | File | Blob,
 	config: OcrConfig = {}
 ): Promise<OcrResult> {
-	// Check for test mode via URL parameter (set by E2E tests)
-	const isTestMode = typeof window !== 'undefined' &&
-		new URLSearchParams(window.location.search).get('testMode') === 'true';
+	const { prompt, onProgress } = config;
 
-	const { useVlm = !isTestMode, prompt, onProgress } = config;
-
-	if (useVlm) {
-		// Try to load VLM if not already loaded
-		if (!isVlmReady()) {
-			const loaded = await loadVlmModel(onProgress);
-			if (!loaded) {
-				console.warn('VLM not available, falling back to Tesseract');
-				return performTesseractOcr(image);
-			}
-		}
-
-		try {
-			return await performVlmOcr(image, prompt);
-		} catch (error) {
-			console.warn('VLM OCR failed, falling back to Tesseract:', error);
-			return performTesseractOcr(image);
+	// Load VLM if not already loaded
+	if (!isVlmReady()) {
+		const loaded = await loadVlmModel(onProgress);
+		if (!loaded) {
+			throw new Error('Failed to load VLM model');
 		}
 	}
 
-	// Use Tesseract directly
-	return performTesseractOcr(image);
+	return performVlmOcr(image, prompt);
 }
 
 /**
  * Determines if OCR result needs manual review.
  */
 export function needsReview(result: OcrResult): boolean {
-	// For VLM results (no words), use a simpler check
-	if (result.words.length === 0) {
-		// VLM results: check if text is very short or confidence is low
-		return result.confidence < OVERALL_CONFIDENCE_THRESHOLD || result.text.length < 10;
-	}
-
-	// For Tesseract results: check overall and word confidence
-	if (result.confidence < OVERALL_CONFIDENCE_THRESHOLD) {
-		return true;
-	}
-
-	const hasLowConfidenceWord = result.words.some(
-		(word) => word.confidence < WORD_CONFIDENCE_THRESHOLD
-	);
-
-	return hasLowConfidenceWord;
+	// VLM results: check if text is very short or confidence is low
+	return result.confidence < CONFIDENCE_THRESHOLD || result.text.length < 10;
 }
 
 /**
  * Gets words with low confidence (for highlighting in UI).
+ * Note: VLM doesn't provide word-level data, so this returns empty array.
  */
-export function getLowConfidenceWords(result: OcrResult): OcrWord[] {
-	return result.words.filter((word) => word.confidence < WORD_CONFIDENCE_THRESHOLD);
+export function getLowConfidenceWords(result: OcrResult): OcrResult['words'] {
+	return result.words.filter((word) => word.confidence < CONFIDENCE_THRESHOLD);
 }
 
 /**
- * Terminates OCR workers (call on app shutdown).
+ * Terminates OCR resources (call on app shutdown).
  */
 export async function terminateOcr(): Promise<void> {
-	if (tesseractWorkerPromise) {
-		const worker = await tesseractWorkerPromise;
-		await worker.terminate();
-		tesseractWorkerPromise = null;
-	}
-	// VLM doesn't need explicit termination (GC will handle it)
 	vlmProcessor = null;
 	vlmModel = null;
 }
