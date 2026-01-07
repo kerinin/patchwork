@@ -5,8 +5,17 @@ import { performOcr, needsReview } from '$lib/services/ocr';
 import { getCurrentUserId } from '$lib/services/auth';
 import type { PatchStatus, ConfidenceData } from '$lib/types/models';
 
-// Accepted image types
-const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/tiff'];
+// Accepted image types - common formats people would upload
+const ACCEPTED_TYPES = [
+	'image/jpeg',
+	'image/png',
+	'image/webp',
+	'image/tiff',
+	'image/gif',
+	'image/bmp',
+	'image/heic',
+	'image/heif'
+];
 
 export type ImportItemStatus = 'pending' | 'uploading' | 'processing' | 'complete' | 'error';
 

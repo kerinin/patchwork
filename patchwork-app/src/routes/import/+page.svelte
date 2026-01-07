@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import DropZone from '$lib/components/import/DropZone.svelte';
+	import PatchCard from '$lib/components/import/PatchCard.svelte';
 	import { importState, processingItems, hasErrors, retryItem } from '$lib/stores/import';
 	import { patches as patchesApi } from '$lib/services/supabase';
 	import type { Patch } from '$lib/types/models';
@@ -134,36 +135,8 @@
 			</div>
 		{:else}
 			<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-				{#each showAll ? allPatches : needsReviewPatches as patch}
-					<div class="rounded-lg border border-paper-dark bg-white p-4 shadow-sm">
-						<div class="mb-3 h-40 overflow-hidden rounded bg-paper-dark">
-							<!-- TODO: Load actual image from storage -->
-							<div class="flex h-full items-center justify-center text-xs text-ink-light">
-								{patch.original_filename || patch.image_path}
-							</div>
-						</div>
-						<div class="flex items-center gap-2">
-							<span
-								class="rounded px-2 py-0.5 text-xs font-medium"
-								class:bg-yellow-100={patch.status === 'needs_review'}
-								class:text-yellow-700={patch.status === 'needs_review'}
-								class:bg-green-100={patch.status === 'ready'}
-								class:text-green-700={patch.status === 'ready'}
-								class:bg-blue-100={patch.status === 'processing'}
-								class:text-blue-700={patch.status === 'processing'}
-								class:bg-purple-100={patch.status === 'ocr_complete'}
-								class:text-purple-700={patch.status === 'ocr_complete'}
-							>
-								{patch.status.replace('_', ' ')}
-							</span>
-							{#if patch.original_filename}
-								<span class="truncate text-xs text-ink-light">{patch.original_filename}</span>
-							{/if}
-						</div>
-						<p class="mt-2 line-clamp-3 text-sm text-ink">
-							{patch.extracted_text || 'No text extracted'}
-						</p>
-					</div>
+				{#each showAll ? allPatches : needsReviewPatches as patch (patch.id)}
+					<PatchCard {patch} />
 				{/each}
 			</div>
 		{/if}
