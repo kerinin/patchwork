@@ -30,6 +30,7 @@
 		"@testing-library/svelte": "^5.3.1",
 		"@types/sharp": "^0.31.1",
 		"autoprefixer": "^10.4.23",
+		"dotenv": "^17.2.3",
 		"fastest-levenshtein": "^1.0.16",
 		"jsdom": "^27.4.0",
 		"openai": "^6.15.0",
@@ -47,6 +48,7 @@
 		"@huggingface/transformers": "^3.8.1",
 		"@supabase/supabase-js": "^2.89.0",
 		"@tauri-apps/api": "^2.9.1",
-		"bits-ui": "^2.15.4"
+		"bits-ui": "^2.15.4",
+		"tesseract.js": "^7.0.0"
 	}
 }

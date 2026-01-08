@@ -1,0 +1,24 @@
+{
+  "timestamp": "2026-01-08T10:23:11Z",
+  "model": "ibm-granite/granite-docling-258M-mlx",
+  "prompt": "Convert this page to docling.",
+  "summary": {
+    "score": -149.1,
+    "avg_cer": 448.2,
+    "avg_semantic": 0.5,
+    "pass_count": 0,
+    "total_count": 1,
+    "avg_inference_ms": 17676,
+    "tokens_per_sec": 43
+  },
+  "results": [
+    {
+      "case_id": "story-01",
+      "cer": 448.2,
+      "semantic": 0.5,
+      "passed": false,
+      "inference_ms": 17676,
+      "tokens": 756
+    }
+  ]
+}

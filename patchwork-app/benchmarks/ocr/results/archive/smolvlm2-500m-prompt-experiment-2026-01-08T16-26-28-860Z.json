@@ -1,0 +1,63 @@
+{
+  "timestamp": "2026-01-08T16:26:28.861Z",
+  "model": "HuggingFaceTB/SmolVLM2-500M-Video-Instruct",
+  "prompts": {
+    "simple": "What text is in this image?",
+    "transcribe": "Transcribe the text in this image.",
+    "ocr": "OCR this document.",
+    "extract": "Extract all text from this image exactly as written.",
+    "continue-reading": "Read and transcribe this ENTIRE page of text.\nThe document contains many lines - continue reading past the title.\nStart at the top and do not stop until you reach the very last line.\nOutput all text exactly as written, preserving line breaks.",
+    "read-all": "Read and output ALL text from this page, from top to bottom.",
+    "no-repeat": "Transcribe this document. Output each line exactly once. Do not repeat any text.",
+    "line-by-line": "List every line of text in this image, one per line.",
+    "minimal": "Text:",
+    "direct": "Output the exact text content of this document."
+  },
+  "ranking": [
+    {
+      "promptName": "continue-reading",
+      "avgCer": 155.66666666666666,
+      "avgSemantic": 0.8183333333333334,
+      "avgInferenceMs": 29973,
+      "score": 13.083333333333343,
+      "details": [
+        {
+          "caseId": "poem-01",
+          "cer": 27.4,
+          "semantic": 0.87,
+          "inferenceMs": 12554
+        },
+        {
+          "caseId": "outline-01",
+          "cer": 17.2,
+          "semantic": 0.96,
+          "inferenceMs": 15720
+        },
+        {
+          "caseId": "meeting-notes-01",
+          "cer": 38.7,
+          "semantic": 0.9,
+          "inferenceMs": 14267
+        },
+        {
+          "caseId": "letter-01",
+          "cer": 14.1,
+          "semantic": 0.93,
+          "inferenceMs": 12034
+        },
+        {
+          "caseId": "journal-01",
+          "cer": 580.5,
+          "semantic": 0.36,
+          "inferenceMs": 63268
+        },
+        {
+          "caseId": "instructions-01",
+          "cer": 256.1,
+          "semantic": 0.89,
+          "inferenceMs": 61996
+        }
+      ]
+    }
+  ]
+}

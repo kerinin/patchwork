@@ -1,0 +1,108 @@
+{
+  "timestamp": "2026-01-08T17:10:11.257Z",
+  "prompt": "Read and transcribe this ENTIRE page of text.\nThe document contains many lines - continue reading past the title.\nStart at the top and do not stop until you reach the very last line.\nOutput all text exactly as written, preserving line breaks.",
+  "models": {
+    "granite-docling-258m-onnx": {
+      "id": "onnx-community/granite-docling-258M-ONNX",
+      "notes": "WINNER - 28.6% CER, consistent across all doc types",
+      "postProcess": "doctags"
+    },
+    "smoldocling-256m": {
+      "id": "ds4sd/SmolDocling-256M-preview",
+      "notes": "Document-specialized with DocTags, slightly worse than granite",
+      "postProcess": "doctags"
+    },
+    "smolvlm-256m": {
+      "id": "HuggingFaceTB/SmolVLM-256M-Instruct",
+      "notes": "Baseline SmolVLM - works but inconsistent on long docs"
+    },
+    "gpt-4o": {
+      "id": "gpt-4o",
+      "notes": "OpenAI GPT-4o with vision - state of the art but expensive",
+      "provider": "openai"
+    },
+    "gpt-4o-mini": {
+      "id": "gpt-4o-mini",
+      "notes": "OpenAI GPT-4o-mini - cheaper alternative with vision",
+      "provider": "openai"
+    }
+  },
+  "ranking": [
+    {
+      "modelName": "gpt-4o",
+      "modelId": "gpt-4o",
+      "avgCer": 7.728571428571429,
+      "avgSemantic": 0.9942857142857143,
+      "passCount": 4,
+      "totalCount": 7,
+      "score": 95.85,
+      "loadTimeMs": 0,
+      "avgInferenceMs": 12474,
+      "details": [
+        {
+          "caseId": "story-01",
+          "cer": 11.7,
+          "semantic": 0.99,
+          "passed": false,
+          "inferenceMs": 10482,
+          "actual": "THE CLOCK ON THE MANTLE\n\n      The house had been empty for eleven years when \nSarah finally returned. She stood in the doorway, ✳\nher suitcase at her feet, and listened.\n\n      Silence. Complete and heavy.\n\n      No -- not quite. From somewhere deeper in the \nhouse came a sound. Tick. Tick. Tick. The old \ngrandfather clock in the parlor, still keeping time \nafter all these years. Who had been winding it?\n\n      She stepped inside. The floorboards creaked \nbeneath her feet, announcing her presence to no one \nin particular. Dust covered everything -- the tables, \nthe chairs, the photographs on the walls. Faces she \nbarely recognized anymore.\n\n      The parlor door was closed.\n\n      \"Hello?\" she called out, feeling foolish.\n\n      Tick. Tick. Tick.\n\n      She reached for the handle--\n\n                                (continued on page 2)",
+          "expected": "THE CLOCK ON THE MANTLE\n\n\tThe house had been empty for eleven years when\nSarah finally returned. She stood in the doorway,\nher suitcase at her feet, and listened.\n\n\tSilence. Complete and heavy.\n\n\tNo -- not quite. From somewhere deeper in the\nhouse came a sound. Tick. Tick. Tick. The old\ngrandfather clock in the parlor, still keeping time\nafter all these years. Who had been winding it?\n\n\tShe stepped inside. The floorboards creaked\nbeneath her feet, announcing her presence to no one\nin particular. Dust covered everything -- the tables,\nthe chairs, the photographs on the walls. Faces she\nbarely recognized anymore.\n\n\tThe parlor door was closed.\n\n\t\"Hello?\" she called out, feeling foolish.\n\n\tTick. Tick. Tick.\n\n\tShe reached for the handle--\n\n\t\t\t\t(continued on page 2)\n"
+        },
+        {
+          "caseId": "poem-01",
+          "cer": 6.8,
+          "semantic": 0.99,
+          "passed": true,
+          "inferenceMs": 10519,
+          "actual": "THE MORNING TRAIN\n\nThe platform empty, still, and grey,\nBefore the crowd arrives\nI stand alone and watch the rails\nStretch out like silver knives.\n\nA distant whistle, low and long,\nCuts through the morning air,\nThe engine rounds the final bend,\nAll steam and smoke and glare.\n\nThe doors slide open, people rush,\nA hundred lives collide,\nAnd I steer on, and find my seat,\nAnd watch the world outside.\n\nThe city shrinks behind the glass,\nThe fields roll into view,\nAnd somewhere in this rocking car,\nI start my life anew.\n\n— Anonymous, 1947",
+          "expected": "THE MORNING TRAIN\n\n\tThe platform empty, still, and grey,\n\tBefore the crowd arrives --\n\tI stand alone and watch the rails\n\tStretch out like silver knives.\n\n\tA distant whistle, low and long,\n\tCuts through the morning air.\n\tThe engine rounds the final bend,\n\tAll steam and smoke and glare.\n\n\tThe doors slide open, people rush,\n\tA hundred lives collide.\n\tAnd I step on, and find my seat,\n\tAnd watch the world outside.\n\n\t\t* * *\n\n\tThe city shrinks behind the glass,\n\tThe fields roll into view.\n\tAnd somewhere in this rocking car,\n\tI start my life anew.\n\n\t\t\t\t-- Anonymous, 1947\n"
+        },
+        {
+          "caseId": "outline-01",
+          "cer": 14,
+          "semantic": 1,
+          "passed": false,
+          "inferenceMs": 13446,
+          "actual": "A BRIEF HISTORY OF PHOTOGRAPHY\nLecture Outline - Prof. Williams\n\nI.      Early Experiments (1820-1840)\n        A. Camera obscura principles\n        B. Niepce and the first photograph\n        C. Daguerre’s contributions\n             1. The daguerreotype process\n             2. Commercial applications\n\nII.  The Wet Plate Era (1851-1880)\n        A. Collodion process\n        B. Advantages over daguerreotype\n              - Shorter exposure times\n              - Reproducible negatives\n        C. Notable practitioners\n              1. Mathew Brady\n              2. Julia Margaret Cameron\n\nIII. The Kodak Revolution (1888-1920)\n        A. “You press the button, we do the rest”\n        B. Roll film development\n        C. Amateur photography emerges\n\nIV. Questions for Discussion\n       - How did photography change portraiture?\n       - What social changes did it enable?",
+          "expected": "A BRIEF HISTORY OF PHOTOGRAPHY\nLecture Outline - Prof. Williams\n\nI.   Early Experiments (1820-1840)\n     A. Camera obscura principles\n     B. Niepce and the first photograph\n     C. Daguerre's contributions\n\t  1. The daguerreotype process\n\t  2. Commercial applications\n\nII.  The Wet Plate Era (1851-1880)\n     A. Collodion process\n     B. Advantages over daguerreotype\n\t  - Shorter exposure times\n\t  - Reproducible negatives\n     C. Notable practitioners\n\t  1. Mathew Brady\n\t  2. Julia Margaret Cameron\n\nIII. The Kodak Revolution (1888-1920)\n     A. \"You press the button, we do the rest\"\n     B. Roll film development\n     C. Amateur photography emerges\n\nIV.  Questions for Discussion\n     - How did photography change portraiture?\n     - What social changes did it enable?\n"
+        },
+        {
+          "caseId": "meeting-notes-01",
+          "cer": 1.4,
+          "semantic": 1,
+          "passed": true,
+          "inferenceMs": 13903,
+          "actual": "PLANNING COMMITTEE MEETING\nNovember 3, 1958\n-----------------------------------\n\nPresent: J. Harrison, M. Webb, R. Collins, S. Park\n\n1. Budget Review\n   - Current balance: $4,250.00\n   - Outstanding invoices: $890.00\n   - Projected surplus: #1,100.00\n\n2. Spring Festival Planning\n   a) Date confirmed: May 15-17\n   b) Venue: Memorial Park (pending approval)\n   c) Entertainment committee to report by Dec. 1\n\n3. Action Items\n   Harrison  --  Contact city office re: permits\n   Webb      --  Draft volunteer schedule\n   Collins   --  Get quotes from three caterers\n   Park      --  Reserve tablesand chairs\n\nNext meeting: November 17, 2:00 PM",
+          "expected": "PLANNING COMMITTEE MEETING\nNovember 3, 1958\n----------------------------\n\nPresent: J. Harrison, M. Webb, R. Collins, S. Park\n\n1. Budget Review\n   - Current balance: $4,250.00\n   - Outstanding invoices: $890.00\n   - Projected surplus: $1,100.00\n\n2. Spring Festival Planning\n   a) Date confirmed: May 15-17\n   b) Venue: Memorial Park (pending approval)\n   c) Entertainment committee to report by Dec. 1\n\n3. Action Items\n   Harrison  --  Contact city office re: permits\n   Webb      --  Draft volunteer schedule\n   Collins   --  Get quotes from three caterers\n   Park      --  Reserve tables and chairs\n\nNext meeting: November 17, 2:00 PM\n"
+        },
+        {
+          "caseId": "letter-01",
+          "cer": 3.7,
+          "semantic": 0.99,
+          "passed": true,
+          "inferenceMs": 10165,
+          "actual": "October 15, 1962\n\nDear Margaret,\n\nI hope this letter finds you well. It has been\nfar too long since we last xxxx spoke, and I find myself\nthinking of our conversations often.\n\nThe autumn here has been particularly beautiful\nthis year. The maples along the drive have turned a\nbrilliant shade of orange, and the garden is\nstill producing tomatoes despite the cooler nights.\n\nI wanted to ask about the book you mentioned --\nthe one about the lighthouse keeper. I have been xxxxxxxx\nunable to find it at our local shop, and wondered\nif you might send me the author's name.\n\nWith warm regards,\nEleanor\n\nP.S. - Do give my best to your mother.",
+          "expected": "October 15, 1962\n\nDear Margaret,\n\n\tI hope this letter finds you well. It has been\nfar too long since we last spoke, and I find myself\nthinking of our conversations often.\n\n\tThe autumn here has been particularly beautiful\nthis year. The maples along the drive have turned\na brilliant shade of orange, and the garden is\nstill producing tomatoes despite the cooler nights.\n\n\tI wanted to ask about the book you mentioned --\nthe one about the lighthouse keeper. I have been\nunable to find it at our local shop, and wondered\nif you might send me the author's name.\n\n\t\tWith warm regards,\n\t\tEleanor\n\nP.S. - Do give my best to your mother.\n"
+        },
+        {
+          "caseId": "journal-01",
+          "cer": 11.9,
+          "semantic": 0.99,
+          "passed": false,
+          "inferenceMs": 14395,
+          "actual": "March 12\n\n        Woke early today -- before six -- and could not\nget back to sleep. Made coffee and watched the sun\ncome up over the rooftops.\n\n        The plumber finally came about the kitchen sink.\nThree weeks of waiting and it took him twenty minutes\nto fix. The bill: $45.00. Highway robbery, but what\ncan you do?\n\n        Afternoon: walked to the library. Returned the\nHemingway and picked up two new ones -\n\n        \"The Old Man and the Sea\" (Hemingway again)\n        \"East of Eden\" by Steinbeck\n\nStarted the Steinbeck after dinner. Very good so far.\n\n        Note to self:\n        - Call Mother on Sunday\n        - Pick up dry cleaning (the blue suit)\n        - Pay electric bill before the 20th\n\n        To bed early. Rain expected tomorrow.",
+          "expected": "March 12\n\n\tWoke early today -- before six -- and could not\nget back to sleep. Made coffee and watched the sun\ncome up over the rooftops.\n\n\tThe plumber finally came about the kitchen sink.\nThree weeks of waiting and it took him twenty minutes\nto fix. The bill: $45.00. Highway robbery, but what\ncan you do?\n\n\tAfternoon: walked to the library. Returned the\nHemingway and picked up two new ones --\n\n\t\"The Old Man and the Sea\" (Hemingway again)\n\t\"East of Eden\" by Steinbeck\n\nStarted the Steinbeck after dinner. Very good so far.\n\n\tNote to self:\n\t- Call Mother on Sunday\n\t- Pick up dry cleaning (the blue suit)\n\t- Pay electric bill before the 20th\n\n\tTo bed early. Rain expected tomorrow.\n"
+        },
+        {
+          "caseId": "instructions-01",
+          "cer": 4.6,
+          "semantic": 1,
+          "passed": true,
+          "inferenceMs": 14410,
+          "actual": "HOW TO DEVELOP BLACK AND WHITE FILM\n===================================\n\nMATERIALS NEEDED:\n- Developing tank and reel\n- Developer (D-76 recommended)\n- Stop bath\n- Fixer\n- Thermometer\n- Timer\n- Film clips\n- Dark bag or darkroom\n\nPROCEDURE:\n\nStep 1 --- Load the film\nIn complete darkness, open the film canister\nand wind the film onto the reel. Place in\ntank and secure lid.\n\nStep 2 --- Mix chemicals\nDeveloper: 68 degrees F (20 C)\nStop bath: 65-70 degrees F\nFixer: 65-70 degrees F\n\nStep 3 --- Develop\nPour developer into tank. Start timer.\nAgitate for first 30 seconds, then 5 seconds\nevery 30 seconds. Total time: 7-9 minutes\n(check film data sheet).\n\nStep 4 --- Stop and fix\nPour out developer. Add stop bath for 30 sec.\nPour out. Add fixer for 5 minutes.\n\nStep 5 --- Wash and dry\nRunning water wash: 10 minutes minimum.\nHang to dry in dust-free area.\n\nCAUTION: Chemicals can stain. Work carefully.",
+          "expected": "HOW TO DEVELOP BLACK AND WHITE FILM\n====================================\n\nMATERIALS NEEDED:\n  - Developing tank and reel\n  - Developer (D-76 recommended)\n  - Stop bath\n  - Fixer\n  - Thermometer\n  - Timer\n  - Film clips\n  - Dark bag or darkroom\n\nPROCEDURE:\n\nStep 1 -- Load the film\n\tIn complete darkness, open the film canister\n\tand wind the film onto the reel. Place in\n\ttank and secure lid.\n\nStep 2 -- Mix chemicals\n\tDeveloper:  68 degrees F (20 C)\n\tStop bath:  65-70 degrees F\n\tFixer:      65-70 degrees F\n\nStep 3 -- Develop\n\tPour developer into tank. Start timer.\n\tAgitate for first 30 seconds, then 5 seconds\n\tevery 30 seconds. Total time: 7-9 minutes\n\t(check film data sheet).\n\nStep 4 -- Stop and fix\n\tPour out developer. Add stop bath for 30 sec.\n\tPour out. Add fixer for 5 minutes.\n\nStep 5 -- Wash and dry\n\tRunning water wash: 10 minutes minimum.\n\tHang to dry in dust-free area.\n\nCAUTION: Chemicals can stain. Work carefully.\n"
+        }
+      ]
+    }
+  ]
+}

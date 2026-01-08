@@ -1,0 +1,63 @@
+{
+  "timestamp": "2026-01-08T16:04:29.858Z",
+  "model": "HuggingFaceTB/SmolVLM-500M-Instruct",
+  "prompts": {
+    "simple": "What text is in this image?",
+    "transcribe": "Transcribe the text in this image.",
+    "ocr": "OCR this document.",
+    "extract": "Extract all text from this image exactly as written.",
+    "continue-reading": "Read and transcribe this ENTIRE page of text.\nThe document contains many lines - continue reading past the title.\nStart at the top and do not stop until you reach the very last line.\nOutput all text exactly as written, preserving line breaks.",
+    "read-all": "Read and output ALL text from this page, from top to bottom.",
+    "no-repeat": "Transcribe this document. Output each line exactly once. Do not repeat any text.",
+    "line-by-line": "List every line of text in this image, one per line.",
+    "minimal": "Text:",
+    "direct": "Output the exact text content of this document."
+  },
+  "ranking": [
+    {
+      "promptName": "line-by-line",
+      "avgCer": 142.45000000000002,
+      "avgSemantic": 0.82,
+      "avgInferenceMs": 23117,
+      "score": 19.77499999999999,
+      "details": [
+        {
+          "caseId": "poem-01",
+          "cer": 14.4,
+          "semantic": 0.91,
+          "inferenceMs": 14810
+        },
+        {
+          "caseId": "outline-01",
+          "cer": 41.2,
+          "semantic": 0.92,
+          "inferenceMs": 30375
+        },
+        {
+          "caseId": "meeting-notes-01",
+          "cer": 29.4,
+          "semantic": 0.94,
+          "inferenceMs": 16718
+        },
+        {
+          "caseId": "letter-01",
+          "cer": 7.1,
+          "semantic": 0.9,
+          "inferenceMs": 13317
+        },
+        {
+          "caseId": "journal-01",
+          "cer": 666,
+          "semantic": 0.44,
+          "inferenceMs": 55559
+        },
+        {
+          "caseId": "instructions-01",
+          "cer": 96.6,
+          "semantic": 0.81,
+          "inferenceMs": 7921
+        }
+      ]
+    }
+  ]
+}

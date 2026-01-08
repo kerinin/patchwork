@@ -1,0 +1,63 @@
+{
+  "timestamp": "2026-01-08T16:07:05.497Z",
+  "model": "HuggingFaceTB/SmolVLM-500M-Instruct",
+  "prompts": {
+    "simple": "What text is in this image?",
+    "transcribe": "Transcribe the text in this image.",
+    "ocr": "OCR this document.",
+    "extract": "Extract all text from this image exactly as written.",
+    "continue-reading": "Read and transcribe this ENTIRE page of text.\nThe document contains many lines - continue reading past the title.\nStart at the top and do not stop until you reach the very last line.\nOutput all text exactly as written, preserving line breaks.",
+    "read-all": "Read and output ALL text from this page, from top to bottom.",
+    "no-repeat": "Transcribe this document. Output each line exactly once. Do not repeat any text.",
+    "line-by-line": "List every line of text in this image, one per line.",
+    "minimal": "Text:",
+    "direct": "Output the exact text content of this document."
+  },
+  "ranking": [
+    {
+      "promptName": "continue-reading",
+      "avgCer": 58.333333333333336,
+      "avgSemantic": 0.8916666666666666,
+      "avgInferenceMs": 22589,
+      "score": 65.41666666666666,
+      "details": [
+        {
+          "caseId": "poem-01",
+          "cer": 10.5,
+          "semantic": 0.91,
+          "inferenceMs": 13647
+        },
+        {
+          "caseId": "outline-01",
+          "cer": 41,
+          "semantic": 0.94,
+          "inferenceMs": 13230
+        },
+        {
+          "caseId": "meeting-notes-01",
+          "cer": 24.3,
+          "semantic": 0.94,
+          "inferenceMs": 14466
+        },
+        {
+          "caseId": "letter-01",
+          "cer": 6.3,
+          "semantic": 0.89,
+          "inferenceMs": 12894
+        },
+        {
+          "caseId": "journal-01",
+          "cer": 25.5,
+          "semantic": 0.86,
+          "inferenceMs": 16240
+        },
+        {
+          "caseId": "instructions-01",
+          "cer": 242.4,
+          "semantic": 0.81,
+          "inferenceMs": 65059
+        }
+      ]
+    }
+  ]
+}

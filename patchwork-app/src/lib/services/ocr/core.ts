@@ -27,17 +27,77 @@ export interface OcrConfig {
  */
 export const CONFIDENCE_THRESHOLD = 85;
 
-// VLM model configuration
-export const VLM_MODEL_ID = 'HuggingFaceTB/SmolVLM-256M-Instruct';
+// VLM model configuration - granite-docling ONNX performs best (28.6% CER)
+export const VLM_MODEL_ID = 'onnx-community/granite-docling-258M-ONNX';
 
-// Default OCR prompt for VLM
-// Determined via prompt experiment - "format-focus" performed best
-export const DEFAULT_VLM_PROMPT = `Extract and transcribe all text from this typewritten document.
-Preserve the original formatting:
-- Keep line breaks where they appear
-- Maintain paragraph spacing
-- Preserve indentation and alignment
-Output only the transcribed text.`;
+// Default OCR prompt for Docling models
+export const DEFAULT_VLM_PROMPT = `Convert this page to docling.`;
+
+// ============================================================================
+// DocTags Post-Processing
+// ============================================================================
+
+/**
+ * Parse DocTags output from Granite-Docling and extract plain text.
+ *
+ * Handles:
+ * 1. Prompt prefix stripping ("user\nConvert...\nassistant\n")
+ * 2. DocTags format: <text>x>y>x>y>content</text>
+ * 3. Coordinate stripping from bounding boxes
+ */
+function parseDocTags(doctagsOutput: string): string {
+	let output = doctagsOutput;
+
+	// Strip prompt prefix if present (format: "user\n...\nassistant\n")
+	const assistantMarker = /^user\n.*?\nassistant\n/s;
+	output = output.replace(assistantMarker, '');
+
+	// Also handle "Assistant:" marker from chat template
+	const assistantColonIdx = output.lastIndexOf('Assistant:');
+	if (assistantColonIdx >= 0) {
+		output = output.slice(assistantColonIdx + 'Assistant:'.length).trim();
+	}
+
+	const lines: string[] = [];
+
+	// Match all tag types: <text>, <code>, <section>, etc.
+	const tagPattern =
+		/<(text|code|section|title|caption|formula|list-item|footnote|header|page-header|page-footer)>([^<]*)<\/\1>/g;
+
+	let match;
+	while ((match = tagPattern.exec(output)) !== null) {
+		const content = match[2];
+		// Content format: x>y>x>y>actual text - strip coordinate prefix
+		const coordPattern = /^\d+>\d+>\d+>\d+>/;
+		const textContent = content.replace(coordPattern, '').trim();
+		if (textContent) {
+			lines.push(textContent);
+		}
+	}
+
+	// Fallback: try to extract text from coordinate patterns directly
+	if (lines.length === 0) {
+		const rawPattern = /\d+>\d+>\d+>\d+>([^\n<]+)/g;
+		while ((match = rawPattern.exec(output)) !== null) {
+			const textContent = match[1].trim();
+			if (textContent) {
+				lines.push(textContent);
+			}
+		}
+	}
+
+	// Last resort: strip all coordinate prefixes and tags
+	if (lines.length === 0) {
+		const cleaned = output
+			.replace(/<[^>]+>/g, '\n')
+			.replace(/\d+>\d+>\d+>\d+>/g, '')
+			.replace(/\n+/g, '\n')
+			.trim();
+		return cleaned;
+	}
+
+	return lines.join('\n');
+}
 
 // ============================================================================
 // VLM State
@@ -168,10 +228,10 @@ export async function performVlmOcr(
 	// Process inputs
 	const inputs = await vlmProcessor(text, [rawImage], {});
 
-	// Generate
+	// Generate - Docling models need more tokens for full documents
 	const generatedIds = await vlmModel.generate({
 		...inputs,
-		max_new_tokens: 1024,
+		max_new_tokens: 2048,
 		do_sample: false
 	});
 
@@ -180,14 +240,11 @@ export async function performVlmOcr(
 		skip_special_tokens: true
 	});
 
-	// Extract response (after "Assistant:" marker)
+	// Extract and parse response
 	const fullOutput = generatedText[0] || '';
-	const assistantMarker = 'Assistant:';
-	const responseStart = fullOutput.lastIndexOf(assistantMarker);
-	const extractedText =
-		responseStart >= 0
-			? fullOutput.slice(responseStart + assistantMarker.length).trim()
-			: fullOutput.trim();
+
+	// Apply DocTags parsing for Docling models
+	const extractedText = parseDocTags(fullOutput);
 
 	// VLM doesn't provide word-level confidence, so we return high confidence
 	// and empty words array (can be enhanced later with post-processing)

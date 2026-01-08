@@ -1,0 +1,528 @@
+{
+  "timestamp": "2026-01-08T17:38:24.717Z",
+  "model": "gpt-4.1-nano",
+  "prompts": {
+    "baseline": "You are an OCR system. Transcribe ALL text from this image exactly as written.\n\nRules:\n- Output ONLY the transcribed text, nothing else\n- Preserve line breaks and paragraph structure\n- Read every line from top to bottom\n- Do not add any commentary, descriptions, or explanations\n- Do not say \"Here is the text\" or similar - just output the raw text\n\nBegin transcription:",
+    "simple": "Transcribe all text from this image exactly as written. Output only the text, nothing else.",
+    "accuracy": "OCR this document with maximum accuracy.\n- Read every character carefully\n- If unsure about a character, use your best judgment based on context\n- Preserve all formatting including indentation and spacing\n- Output only the transcribed text",
+    "clean": "Transcribe this document precisely.\n- Output clean text only - no asterisks, symbols, or placeholders for unclear characters\n- If a character is unclear, infer the most likely character from context\n- Preserve paragraph breaks and line structure\n- Do not add any markers or annotations",
+    "formatting": "Transcribe this typewritten document exactly.\n- Preserve all indentation (tabs and spaces)\n- Keep original line breaks\n- Maintain paragraph spacing\n- Copy punctuation exactly as shown\n- Output only the transcribed text, no commentary",
+    "expert": "You are an expert OCR system trained on typewritten documents from the 1940s-1960s.\nTranscribe this document with perfect accuracy:\n- Recognize common typewriter fonts and spacing\n- Handle faded or slightly unclear characters using context\n- Preserve the original document structure exactly\n- Output clean text without any markup or annotations",
+    "minimal": "OCR:",
+    "structured": "Extract all text from this image.\nRequirements:\n1. Transcribe every word exactly as written\n2. Preserve line breaks with newlines\n3. Preserve paragraph breaks with double newlines\n4. Keep indentation using spaces\n5. No headers, labels, or commentary - just the raw text",
+    "careful": "Carefully transcribe this document character by character.\nCommon OCR errors to avoid:\n- Don't confuse 'l' and '1' or 'O' and '0'\n- Watch for faded characters - use context to determine correct letter\n- Don't insert placeholder symbols (*, x, etc.) for unclear text\n- Preserve all whitespace and formatting\nOutput only the final transcribed text.",
+    "context": "This is a typewritten document. Transcribe it exactly.\nThe document may contain:\n- Letters, memos, or notes\n- Lists with indentation\n- Dates and numbers\n- Proper names\nRead carefully and output only the text content, preserving all formatting."
+  },
+  "ranking": [
+    {
+      "promptName": "baseline",
+      "avgCer": 5.457142857142856,
+      "avgSemantic": 0.9885714285714285,
+      "avgInferenceMs": 7133,
+      "score": 96.7,
+      "details": [
+        {
+          "caseId": "story-01",
+          "cer": 2.1,
+          "semantic": 0.99,
+          "inferenceMs": 4729
+        },
+        {
+          "caseId": "poem-01",
+          "cer": 4,
+          "semantic": 0.99,
+          "inferenceMs": 5095
+        },
+        {
+          "caseId": "outline-01",
+          "cer": 11.2,
+          "semantic": 0.99,
+          "inferenceMs": 6151
+        },
+        {
+          "caseId": "meeting-notes-01",
+          "cer": 8.2,
+          "semantic": 0.99,
+          "inferenceMs": 7106
+        },
+        {
+          "caseId": "letter-01",
+          "cer": 4.1,
+          "semantic": 0.98,
+          "inferenceMs": 8899
+        },
+        {
+          "caseId": "journal-01",
+          "cer": 3.1,
+          "semantic": 0.98,
+          "inferenceMs": 9206
+        },
+        {
+          "caseId": "instructions-01",
+          "cer": 5.5,
+          "semantic": 1,
+          "inferenceMs": 8748
+        }
+      ]
+    },
+    {
+      "promptName": "careful",
+      "avgCer": 5.071428571428571,
+      "avgSemantic": 0.9842857142857143,
+      "avgInferenceMs": 8208,
+      "score": 96.67857142857143,
+      "details": [
+        {
+          "caseId": "story-01",
+          "cer": 2.1,
+          "semantic": 0.99,
+          "inferenceMs": 6595
+        },
+        {
+          "caseId": "poem-01",
+          "cer": 3.9,
+          "semantic": 0.99,
+          "inferenceMs": 8363
+        },
+        {
+          "caseId": "outline-01",
+          "cer": 7.4,
+          "semantic": 0.99,
+          "inferenceMs": 8685
+        },
+        {
+          "caseId": "meeting-notes-01",
+          "cer": 8.5,
+          "semantic": 0.98,
+          "inferenceMs": 10051
+        },
+        {
+          "caseId": "letter-01",
+          "cer": 5.1,
+          "semantic": 0.97,
+          "inferenceMs": 8284
+        },
+        {
+          "caseId": "journal-01",
+          "cer": 2.9,
+          "semantic": 0.98,
+          "inferenceMs": 7837
+        },
+        {
+          "caseId": "instructions-01",
+          "cer": 5.6,
+          "semantic": 0.99,
+          "inferenceMs": 7643
+        }
+      ]
+    },
+    {
+      "promptName": "simple",
+      "avgCer": 5.442857142857143,
+      "avgSemantic": 0.9857142857142858,
+      "avgInferenceMs": 7623,
+      "score": 96.56428571428572,
+      "details": [
+        {
+          "caseId": "story-01",
+          "cer": 3.2,
+          "semantic": 0.97,
+          "inferenceMs": 4613
+        },
+        {
+          "caseId": "poem-01",
+          "cer": 4,
+          "semantic": 0.99,
+          "inferenceMs": 9711
+        },
+        {
+          "caseId": "outline-01",
+          "cer": 11.4,
+          "semantic": 0.99,
+          "inferenceMs": 9745
+        },
+        {
+          "caseId": "meeting-notes-01",
+          "cer": 7.9,
+          "semantic": 1,
+          "inferenceMs": 6309
+        },
+        {
+          "caseId": "letter-01",
+          "cer": 3.3,
+          "semantic": 0.97,
+          "inferenceMs": 7141
+        },
+        {
+          "caseId": "journal-01",
+          "cer": 2.8,
+          "semantic": 0.99,
+          "inferenceMs": 8305
+        },
+        {
+          "caseId": "instructions-01",
+          "cer": 5.5,
+          "semantic": 0.99,
+          "inferenceMs": 7537
+        }
+      ]
+    },
+    {
+      "promptName": "clean",
+      "avgCer": 5.385714285714286,
+      "avgSemantic": 0.9842857142857143,
+      "avgInferenceMs": 7625,
+      "score": 96.52142857142857,
+      "details": [
+        {
+          "caseId": "story-01",
+          "cer": 3.2,
+          "semantic": 0.97,
+          "inferenceMs": 5716
+        },
+        {
+          "caseId": "poem-01",
+          "cer": 5.1,
+          "semantic": 0.99,
+          "inferenceMs": 9333
+        },
+        {
+          "caseId": "outline-01",
+          "cer": 9.3,
+          "semantic": 0.99,
+          "inferenceMs": 7523
+        },
+        {
+          "caseId": "meeting-notes-01",
+          "cer": 9.1,
+          "semantic": 0.98,
+          "inferenceMs": 8187
+        },
+        {
+          "caseId": "letter-01",
+          "cer": 3.2,
+          "semantic": 0.98,
+          "inferenceMs": 6647
+        },
+        {
+          "caseId": "journal-01",
+          "cer": 3.1,
+          "semantic": 0.98,
+          "inferenceMs": 8941
+        },
+        {
+          "caseId": "instructions-01",
+          "cer": 4.7,
+          "semantic": 1,
+          "inferenceMs": 7027
+        }
+      ]
+    },
+    {
+      "promptName": "structured",
+      "avgCer": 5.685714285714285,
+      "avgSemantic": 0.982857142857143,
+      "avgInferenceMs": 8563,
+      "score": 96.30000000000001,
+      "details": [
+        {
+          "caseId": "story-01",
+          "cer": 3.4,
+          "semantic": 0.99,
+          "inferenceMs": 5284
+        },
+        {
+          "caseId": "poem-01",
+          "cer": 3.9,
+          "semantic": 0.99,
+          "inferenceMs": 8792
+        },
+        {
+          "caseId": "outline-01",
+          "cer": 8.5,
+          "semantic": 1,
+          "inferenceMs": 11120
+        },
+        {
+          "caseId": "meeting-notes-01",
+          "cer": 7.9,
+          "semantic": 1,
+          "inferenceMs": 10755
+        },
+        {
+          "caseId": "letter-01",
+          "cer": 3.7,
+          "semantic": 0.93,
+          "inferenceMs": 6366
+        },
+        {
+          "caseId": "journal-01",
+          "cer": 3.2,
+          "semantic": 0.98,
+          "inferenceMs": 8500
+        },
+        {
+          "caseId": "instructions-01",
+          "cer": 9.2,
+          "semantic": 0.99,
+          "inferenceMs": 9123
+        }
+      ]
+    },
+    {
+      "promptName": "context",
+      "avgCer": 6.171428571428572,
+      "avgSemantic": 0.9771428571428571,
+      "avgInferenceMs": 8143,
+      "score": 95.77142857142857,
+      "details": [
+        {
+          "caseId": "story-01",
+          "cer": 1.9,
+          "semantic": 0.99,
+          "inferenceMs": 5823
+        },
+        {
+          "caseId": "poem-01",
+          "cer": 3.9,
+          "semantic": 0.99,
+          "inferenceMs": 8074
+        },
+        {
+          "caseId": "outline-01",
+          "cer": 12.3,
+          "semantic": 0.96,
+          "inferenceMs": 9859
+        },
+        {
+          "caseId": "meeting-notes-01",
+          "cer": 9.1,
+          "semantic": 0.98,
+          "inferenceMs": 9312
+        },
+        {
+          "caseId": "letter-01",
+          "cer": 6.5,
+          "semantic": 0.97,
+          "inferenceMs": 8734
+        },
+        {
+          "caseId": "journal-01",
+          "cer": 3.8,
+          "semantic": 0.95,
+          "inferenceMs": 7287
+        },
+        {
+          "caseId": "instructions-01",
+          "cer": 5.7,
+          "semantic": 1,
+          "inferenceMs": 7913
+        }
+      ]
+    },
+    {
+      "promptName": "expert",
+      "avgCer": 6.271428571428572,
+      "avgSemantic": 0.9685714285714286,
+      "avgInferenceMs": 7813,
+      "score": 95.29285714285714,
+      "details": [
+        {
+          "caseId": "story-01",
+          "cer": 3.2,
+          "semantic": 0.97,
+          "inferenceMs": 6788
+        },
+        {
+          "caseId": "poem-01",
+          "cer": 8.1,
+          "semantic": 0.98,
+          "inferenceMs": 8736
+        },
+        {
+          "caseId": "outline-01",
+          "cer": 10.2,
+          "semantic": 0.95,
+          "inferenceMs": 9893
+        },
+        {
+          "caseId": "meeting-notes-01",
+          "cer": 8.5,
+          "semantic": 0.98,
+          "inferenceMs": 7634
+        },
+        {
+          "caseId": "letter-01",
+          "cer": 3.5,
+          "semantic": 0.94,
+          "inferenceMs": 5767
+        },
+        {
+          "caseId": "journal-01",
+          "cer": 3.7,
+          "semantic": 0.96,
+          "inferenceMs": 8014
+        },
+        {
+          "caseId": "instructions-01",
+          "cer": 6.7,
+          "semantic": 1,
+          "inferenceMs": 7858
+        }
+      ]
+    },
+    {
+      "promptName": "accuracy",
+      "avgCer": 7.614285714285715,
+      "avgSemantic": 0.9728571428571428,
+      "avgInferenceMs": 7371,
+      "score": 94.83571428571429,
+      "details": [
+        {
+          "caseId": "story-01",
+          "cer": 3,
+          "semantic": 0.97,
+          "inferenceMs": 5957
+        },
+        {
+          "caseId": "poem-01",
+          "cer": 10,
+          "semantic": 0.98,
+          "inferenceMs": 7962
+        },
+        {
+          "caseId": "outline-01",
+          "cer": 13,
+          "semantic": 0.97,
+          "inferenceMs": 7484
+        },
+        {
+          "caseId": "meeting-notes-01",
+          "cer": 9.1,
+          "semantic": 0.97,
+          "inferenceMs": 9142
+        },
+        {
+          "caseId": "letter-01",
+          "cer": 6.5,
+          "semantic": 0.97,
+          "inferenceMs": 5830
+        },
+        {
+          "caseId": "journal-01",
+          "cer": 3.7,
+          "semantic": 0.96,
+          "inferenceMs": 7069
+        },
+        {
+          "caseId": "instructions-01",
+          "cer": 8,
+          "semantic": 0.99,
+          "inferenceMs": 8153
+        }
+      ]
+    },
+    {
+      "promptName": "formatting",
+      "avgCer": 8.67142857142857,
+      "avgSemantic": 0.972857142857143,
+      "avgInferenceMs": 7575,
+      "score": 94.30714285714285,
+      "details": [
+        {
+          "caseId": "story-01",
+          "cer": 2.5,
+          "semantic": 0.99,
+          "inferenceMs": 5856
+        },
+        {
+          "caseId": "poem-01",
+          "cer": 4.4,
+          "semantic": 0.99,
+          "inferenceMs": 7152
+        },
+        {
+          "caseId": "outline-01",
+          "cer": 11.5,
+          "semantic": 0.99,
+          "inferenceMs": 7549
+        },
+        {
+          "caseId": "meeting-notes-01",
+          "cer": 11.2,
+          "semantic": 0.98,
+          "inferenceMs": 7796
+        },
+        {
+          "caseId": "letter-01",
+          "cer": 18.4,
+          "semantic": 0.89,
+          "inferenceMs": 8389
+        },
+        {
+          "caseId": "journal-01",
+          "cer": 2.8,
+          "semantic": 0.98,
+          "inferenceMs": 7240
+        },
+        {
+          "caseId": "instructions-01",
+          "cer": 9.9,
+          "semantic": 0.99,
+          "inferenceMs": 9041
+        }
+      ]
+    },
+    {
+      "promptName": "minimal",
+      "avgCer": 10.957142857142857,
+      "avgSemantic": 0.8971428571428571,
+      "avgInferenceMs": 8220,
+      "score": 89.37857142857143,
+      "details": [
+        {
+          "caseId": "story-01",
+          "cer": 9.7,
+          "semantic": 0.84,
+          "inferenceMs": 7299
+        },
+        {
+          "caseId": "poem-01",
+          "cer": 19.3,
+          "semantic": 0.82,
+          "inferenceMs": 8645
+        },
+        {
+          "caseId": "outline-01",
+          "cer": 7.8,
+          "semantic": 1,
+          "inferenceMs": 8180
+        },
+        {
+          "caseId": "meeting-notes-01",
+          "cer": 12.6,
+          "semantic": 0.92,
+          "inferenceMs": 8389
+        },
+        {
+          "caseId": "letter-01",
+          "cer": 3.3,
+          "semantic": 0.95,
+          "inferenceMs": 7866
+        },
+        {
+          "caseId": "journal-01",
+          "cer": 18.6,
+          "semantic": 0.75,
+          "inferenceMs": 9022
+        },
+        {
+          "caseId": "instructions-01",
+          "cer": 5.4,
+          "semantic": 1,
+          "inferenceMs": 8140
+        }
+      ]
+    }
+  ]
+}

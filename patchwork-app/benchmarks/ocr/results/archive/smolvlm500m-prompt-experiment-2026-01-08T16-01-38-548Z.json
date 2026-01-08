@@ -1,0 +1,168 @@
+{
+  "timestamp": "2026-01-08T16:01:38.556Z",
+  "model": "HuggingFaceTB/SmolVLM-500M-Instruct",
+  "prompts": {
+    "simple": "What text is in this image?",
+    "transcribe": "Transcribe the text in this image.",
+    "ocr": "OCR this document.",
+    "extract": "Extract all text from this image exactly as written.",
+    "continue-reading": "Read and transcribe this ENTIRE page of text.\nThe document contains many lines - continue reading past the title.\nStart at the top and do not stop until you reach the very last line.\nOutput all text exactly as written, preserving line breaks.",
+    "read-all": "Read and output ALL text from this page, from top to bottom.",
+    "no-repeat": "Transcribe this document. Output each line exactly once. Do not repeat any text.",
+    "line-by-line": "List every line of text in this image, one per line.",
+    "minimal": "Text:",
+    "direct": "Output the exact text content of this document."
+  },
+  "ranking": [
+    {
+      "promptName": "line-by-line",
+      "avgCer": 7.1,
+      "avgSemantic": 0.9,
+      "avgInferenceMs": 13029,
+      "score": 91.45,
+      "details": [
+        {
+          "caseId": "letter-01",
+          "cer": 7.1,
+          "semantic": 0.9,
+          "inferenceMs": 13029
+        }
+      ]
+    },
+    {
+      "promptName": "continue-reading",
+      "avgCer": 6.3,
+      "avgSemantic": 0.89,
+      "avgInferenceMs": 13744,
+      "score": 91.35,
+      "details": [
+        {
+          "caseId": "letter-01",
+          "cer": 6.3,
+          "semantic": 0.89,
+          "inferenceMs": 13744
+        }
+      ]
+    },
+    {
+      "promptName": "transcribe",
+      "avgCer": 7,
+      "avgSemantic": 0.89,
+      "avgInferenceMs": 13075,
+      "score": 91,
+      "details": [
+        {
+          "caseId": "letter-01",
+          "cer": 7,
+          "semantic": 0.89,
+          "inferenceMs": 13075
+        }
+      ]
+    },
+    {
+      "promptName": "extract",
+      "avgCer": 7,
+      "avgSemantic": 0.89,
+      "avgInferenceMs": 12224,
+      "score": 91,
+      "details": [
+        {
+          "caseId": "letter-01",
+          "cer": 7,
+          "semantic": 0.89,
+          "inferenceMs": 12224
+        }
+      ]
+    },
+    {
+      "promptName": "direct",
+      "avgCer": 7,
+      "avgSemantic": 0.89,
+      "avgInferenceMs": 18060,
+      "score": 91,
+      "details": [
+        {
+          "caseId": "letter-01",
+          "cer": 7,
+          "semantic": 0.89,
+          "inferenceMs": 18060
+        }
+      ]
+    },
+    {
+      "promptName": "read-all",
+      "avgCer": 12.4,
+      "avgSemantic": 0.87,
+      "avgInferenceMs": 12719,
+      "score": 87.3,
+      "details": [
+        {
+          "caseId": "letter-01",
+          "cer": 12.4,
+          "semantic": 0.87,
+          "inferenceMs": 12719
+        }
+      ]
+    },
+    {
+      "promptName": "no-repeat",
+      "avgCer": 12.7,
+      "avgSemantic": 0.87,
+      "avgInferenceMs": 12599,
+      "score": 87.15,
+      "details": [
+        {
+          "caseId": "letter-01",
+          "cer": 12.7,
+          "semantic": 0.87,
+          "inferenceMs": 12599
+        }
+      ]
+    },
+    {
+      "promptName": "minimal",
+      "avgCer": 12.1,
+      "avgSemantic": 0.84,
+      "avgInferenceMs": 40340,
+      "score": 85.95,
+      "details": [
+        {
+          "caseId": "letter-01",
+          "cer": 12.1,
+          "semantic": 0.84,
+          "inferenceMs": 40340
+        }
+      ]
+    },
+    {
+      "promptName": "simple",
+      "avgCer": 94.6,
+      "avgSemantic": 0.47,
+      "avgInferenceMs": 8891,
+      "score": 26.200000000000003,
+      "details": [
+        {
+          "caseId": "letter-01",
+          "cer": 94.6,
+          "semantic": 0.47,
+          "inferenceMs": 8891
+        }
+      ]
+    },
+    {
+      "promptName": "ocr",
+      "avgCer": 95.4,
+      "avgSemantic": 0.47,
+      "avgInferenceMs": 8100,
+      "score": 25.799999999999997,
+      "details": [
+        {
+          "caseId": "letter-01",
+          "cer": 95.4,
+          "semantic": 0.47,
+          "inferenceMs": 8100
+        }
+      ]
+    }
+  ]
+}

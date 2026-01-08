@@ -1,5 +1,16 @@
 #!/usr/bin/env npx tsx
 
+/**
+ * OCR Benchmark Runner
+ * Tests the production OCR implementation against a test suite.
+ *
+ * Usage:
+ *   npx tsx scripts/benchmark-ocr/index.ts
+ *   npx tsx scripts/benchmark-ocr/index.ts --category typewritten
+ *   npx tsx scripts/benchmark-ocr/index.ts --case letter-01 --verbose
+ */
+
+import 'dotenv/config';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { prepareImage } from '../../src/lib/services/ocr/image-prep.node';

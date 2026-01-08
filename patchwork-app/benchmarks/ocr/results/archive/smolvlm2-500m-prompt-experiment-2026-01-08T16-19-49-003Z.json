@@ -1,0 +1,168 @@
+{
+  "timestamp": "2026-01-08T16:19:49.003Z",
+  "model": "HuggingFaceTB/SmolVLM2-500M-Video-Instruct",
+  "prompts": {
+    "simple": "What text is in this image?",
+    "transcribe": "Transcribe the text in this image.",
+    "ocr": "OCR this document.",
+    "extract": "Extract all text from this image exactly as written.",
+    "continue-reading": "Read and transcribe this ENTIRE page of text.\nThe document contains many lines - continue reading past the title.\nStart at the top and do not stop until you reach the very last line.\nOutput all text exactly as written, preserving line breaks.",
+    "read-all": "Read and output ALL text from this page, from top to bottom.",
+    "no-repeat": "Transcribe this document. Output each line exactly once. Do not repeat any text.",
+    "line-by-line": "List every line of text in this image, one per line.",
+    "minimal": "Text:",
+    "direct": "Output the exact text content of this document."
+  },
+  "ranking": [
+    {
+      "promptName": "continue-reading",
+      "avgCer": 14.1,
+      "avgSemantic": 0.93,
+      "avgInferenceMs": 12096,
+      "score": 89.45,
+      "details": [
+        {
+          "caseId": "letter-01",
+          "cer": 14.1,
+          "semantic": 0.93,
+          "inferenceMs": 12096
+        }
+      ]
+    },
+    {
+      "promptName": "line-by-line",
+      "avgCer": 14.8,
+      "avgSemantic": 0.89,
+      "avgInferenceMs": 11927,
+      "score": 87.1,
+      "details": [
+        {
+          "caseId": "letter-01",
+          "cer": 14.8,
+          "semantic": 0.89,
+          "inferenceMs": 11927
+        }
+      ]
+    },
+    {
+      "promptName": "no-repeat",
+      "avgCer": 14.9,
+      "avgSemantic": 0.89,
+      "avgInferenceMs": 12134,
+      "score": 87.05,
+      "details": [
+        {
+          "caseId": "letter-01",
+          "cer": 14.9,
+          "semantic": 0.89,
+          "inferenceMs": 12134
+        }
+      ]
+    },
+    {
+      "promptName": "ocr",
+      "avgCer": 22.9,
+      "avgSemantic": 0.85,
+      "avgInferenceMs": 11289,
+      "score": 81.05,
+      "details": [
+        {
+          "caseId": "letter-01",
+          "cer": 22.9,
+          "semantic": 0.85,
+          "inferenceMs": 11289
+        }
+      ]
+    },
+    {
+      "promptName": "read-all",
+      "avgCer": 26.8,
+      "avgSemantic": 0.81,
+      "avgInferenceMs": 11221,
+      "score": 77.1,
+      "details": [
+        {
+          "caseId": "letter-01",
+          "cer": 26.8,
+          "semantic": 0.81,
+          "inferenceMs": 11221
+        }
+      ]
+    },
+    {
+      "promptName": "direct",
+      "avgCer": 26.8,
+      "avgSemantic": 0.81,
+      "avgInferenceMs": 11145,
+      "score": 77.1,
+      "details": [
+        {
+          "caseId": "letter-01",
+          "cer": 26.8,
+          "semantic": 0.81,
+          "inferenceMs": 11145
+        }
+      ]
+    },
+    {
+      "promptName": "transcribe",
+      "avgCer": 28.9,
+      "avgSemantic": 0.69,
+      "avgInferenceMs": 11505,
+      "score": 70.05,
+      "details": [
+        {
+          "caseId": "letter-01",
+          "cer": 28.9,
+          "semantic": 0.69,
+          "inferenceMs": 11505
+        }
+      ]
+    },
+    {
+      "promptName": "simple",
+      "avgCer": 72.7,
+      "avgSemantic": 0.63,
+      "avgInferenceMs": 12121,
+      "score": 45.15,
+      "details": [
+        {
+          "caseId": "letter-01",
+          "cer": 72.7,
+          "semantic": 0.63,
+          "inferenceMs": 12121
+        }
+      ]
+    },
+    {
+      "promptName": "minimal",
+      "avgCer": 97.8,
+      "avgSemantic": 0.62,
+      "avgInferenceMs": 7788,
+      "score": 32.1,
+      "details": [
+        {
+          "caseId": "letter-01",
+          "cer": 97.8,
+          "semantic": 0.62,
+          "inferenceMs": 7788
+        }
+      ]
+    },
+    {
+      "promptName": "extract",
+      "avgCer": 660.8,
+      "avgSemantic": 0.36,
+      "avgInferenceMs": 55010,
+      "score": -262.4,
+      "details": [
+        {
+          "caseId": "letter-01",
+          "cer": 660.8,
+          "semantic": 0.36,
+          "inferenceMs": 55010
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "timestamp": "2026-01-08T10:19:35Z",
+  "model": "ibm-granite/granite-docling-258M-mlx",
+  "prompt": "Convert this page to docling.",
+  "summary": {
+    "score": 79.2,
+    "avg_cer": 30.2,
+    "avg_semantic": 0.89,
+    "pass_count": 2,
+    "total_count": 7,
+    "avg_inference_ms": 3840,
+    "tokens_per_sec": 37
+  },
+  "results": [
+    {
+      "case_id": "story-01",
+      "cer": 132.4,
+      "semantic": 0.52,
+      "passed": false,
+      "inference_ms": 13703,
+      "tokens": 303
+    },
+    {
+      "case_id": "poem-01",
+      "cer": 10.2,
+      "semantic": 0.93,
+      "passed": false,
+      "inference_ms": 1602,
+      "tokens": 98
+    },
+    {
+      "case_id": "outline-01",
+      "cer": 12.3,
+      "semantic": 0.97,
+      "passed": false,
+      "inference_ms": 2698,
+      "tokens": 108
+    },
+    {
+      "case_id": "meeting-notes-01",
+      "cer": 33.5,
+      "semantic": 0.97,
+      "passed": false,
+      "inference_ms": 2426,
+      "tokens": 100
+    },
+    {
+      "case_id": "letter-01",
+      "cer": 4.9,
+      "semantic": 0.92,
+      "passed": true,
+      "inference_ms": 1733,
+      "tokens": 114
+    },
+    {
+      "case_id": "journal-01",
+      "cer": 5.1,
+      "semantic": 0.93,
+      "passed": true,
+      "inference_ms": 1985,
+      "tokens": 125
+    },
+    {
+      "case_id": "instructions-01",
+      "cer": 12.8,
+      "semantic": 0.96,
+      "passed": false,
+      "inference_ms": 2735,
+      "tokens": 157
+    }
+  ]
+}

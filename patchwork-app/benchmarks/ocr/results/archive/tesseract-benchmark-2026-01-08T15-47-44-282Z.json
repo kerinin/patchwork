@@ -1,0 +1,71 @@
+{
+  "timestamp": "2026-01-08T15:47:44.283Z",
+  "engine": "tesseract.js",
+  "summary": {
+    "score": 57.8,
+    "avgCer": 61.1,
+    "avgSemantic": 0.77,
+    "avgConfidence": 64,
+    "passCount": 1,
+    "totalCount": 7,
+    "avgInferenceMs": 2085
+  },
+  "results": [
+    {
+      "caseId": "story-01",
+      "cer": 27.5,
+      "semantic": 0.85,
+      "confidence": 70,
+      "passed": false,
+      "inferenceMs": 1691
+    },
+    {
+      "caseId": "poem-01",
+      "cer": 81.1,
+      "semantic": 0.66,
+      "confidence": 55,
+      "passed": false,
+      "inferenceMs": 2497
+    },
+    {
+      "caseId": "outline-01",
+      "cer": 35.4,
+      "semantic": 0.78,
+      "confidence": 59,
+      "passed": false,
+      "inferenceMs": 2088
+    },
+    {
+      "caseId": "meeting-notes-01",
+      "cer": 30.4,
+      "semantic": 0.93,
+      "confidence": 69,
+      "passed": false,
+      "inferenceMs": 1610
+    },
+    {
+      "caseId": "letter-01",
+      "cer": 6.3,
+      "semantic": 0.94,
+      "confidence": 89,
+      "passed": true,
+      "inferenceMs": 1309
+    },
+    {
+      "caseId": "journal-01",
+      "cer": 194.9,
+      "semantic": 0.57,
+      "confidence": 38,
+      "passed": false,
+      "inferenceMs": 4190
+    },
+    {
+      "caseId": "instructions-01",
+      "cer": 52.1,
+      "semantic": 0.64,
+      "confidence": 66,
+      "passed": false,
+      "inferenceMs": 1212
+    }
+  ]
+}

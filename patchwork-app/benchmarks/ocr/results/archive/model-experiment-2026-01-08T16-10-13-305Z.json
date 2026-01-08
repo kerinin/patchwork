@@ -1,0 +1,29 @@
+{
+  "timestamp": "2026-01-08T16:10:13.306Z",
+  "prompt": "Read and transcribe this ENTIRE page of text.\nThe document contains many lines - continue reading past the title.\nStart at the top and do not stop until you reach the very last line.\nOutput all text exactly as written, preserving line breaks.",
+  "models": {
+    "smolvlm-256m": {
+      "id": "HuggingFaceTB/SmolVLM-256M-Instruct",
+      "notes": "Baseline smallest SmolVLM"
+    },
+    "smolvlm-500m": {
+      "id": "HuggingFaceTB/SmolVLM-500M-Instruct",
+      "notes": "Larger SmolVLM - re-testing with optimized prompts"
+    },
+    "smolvlm2-2.2b": {
+      "id": "HuggingFaceTB/SmolVLM2-2.2B-Instruct",
+      "notes": "Largest SmolVLM2, 2.2B params, ~5GB RAM"
+    },
+    "smoldocling-256m": {
+      "id": "ds4sd/SmolDocling-256M-preview",
+      "notes": "Document-specialized with DocTags",
+      "postProcess": "doctags"
+    },
+    "granite-docling-258m-onnx": {
+      "id": "onnx-community/granite-docling-258M-ONNX",
+      "notes": "ONNX granite-docling, current best (28.6% CER)",
+      "postProcess": "doctags"
+    }
+  },
+  "ranking": []
+}

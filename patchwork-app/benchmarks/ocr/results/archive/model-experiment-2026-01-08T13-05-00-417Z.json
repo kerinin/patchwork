@@ -1,0 +1,15 @@
+{
+  "timestamp": "2026-01-08T13:05:00.417Z",
+  "prompt": "You are an OCR system. TRANSCRIBE this typewritten document exactly.\n\nRead every word from top to bottom, left to right.\nCopy ALL text - titles, paragraphs, lists, signatures, footnotes.\n\nPreserve formatting:\n- Keep line breaks where they appear\n- Maintain paragraph spacing\n- Preserve indentation\n\nOutput ONLY the transcribed text.",
+  "models": {
+    "granite-docling-258M": {
+      "id": "ibm-granite/granite-docling-258M",
+      "notes": "Newer version of smoldocling"
+    },
+    "PaddleOCR-VL": {
+      "id": "PaddlePaddle/PaddleOCR-VL",
+      "notes": "Alternate OCR model"
+    }
+  },
+  "ranking": []
+}
