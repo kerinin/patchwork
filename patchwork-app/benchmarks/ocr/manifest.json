@@ -1,0 +1,9 @@
+{
+  "$schema": "./manifest.schema.json",
+  "description": "OCR benchmark test cases for evaluating VLM text extraction quality",
+  "thresholds": {
+    "cer": 10,
+    "semantic": 0.85
+  },
+  "cases": []
+}
