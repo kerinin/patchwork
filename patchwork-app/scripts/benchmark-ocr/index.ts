@@ -143,7 +143,7 @@ async function main(): Promise<void> {
 				console.log(status);
 			}
 		},
-		'wasm'
+		'cpu' // Node.js with onnxruntime-node requires 'cpu' device
 	);
 
 	if (!modelLoaded) {

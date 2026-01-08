@@ -18,8 +18,8 @@ export interface OcrConfig {
 	prompt?: string;
 	/** Progress callback for model loading */
 	onProgress?: (status: string, progress?: number) => void;
-	/** Device to use: 'webgpu', 'wasm', or 'auto' */
-	device?: 'webgpu' | 'wasm' | 'auto';
+	/** Device to use: 'webgpu', 'wasm', 'cpu', or 'auto' */
+	device?: 'webgpu' | 'wasm' | 'cpu' | 'auto';
 }
 
 /**
@@ -50,7 +50,7 @@ let currentModelId: string = VLM_MODEL_ID;
  */
 export async function loadVlmModel(
 	onProgress?: (status: string, progress?: number) => void,
-	device: 'webgpu' | 'wasm' = 'wasm',
+	device: 'webgpu' | 'wasm' | 'cpu' = 'wasm',
 	modelId: string = VLM_MODEL_ID
 ): Promise<boolean> {
 	// If model already loaded with same ID, return true

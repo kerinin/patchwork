@@ -92,7 +92,9 @@ describe('Import Flow Integration Tests', () => {
 				const testFile = new Blob([testContent], { type: 'image/png' });
 
 				// Sanitize filename (matching our sanitizeFilename function)
-				const originalName = 'test file with spaces.png';
+				// Use timestamp to ensure unique filename per test run
+				const timestamp = Date.now();
+				const originalName = `test file with spaces ${timestamp}.png`;
 				const sanitizedName = originalName
 					.replace(/[\s\u00A0\u202F]+/g, '_')
 					.replace(/[^a-zA-Z0-9._-]/g, '_')
