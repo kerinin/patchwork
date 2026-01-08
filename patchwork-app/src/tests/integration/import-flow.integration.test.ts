@@ -6,6 +6,7 @@
  * 1. Dev user authentication works (catches "Invalid login credentials" errors)
  * 2. Storage uploads work with authenticated user
  * 3. Patch CRUD operations work
+ * 4. OCR Edge Function is deployed and responds correctly
  *
  * If the dev user doesn't exist, tests will FAIL in beforeAll with:
  * "Auth setup failed: Invalid login credentials"
@@ -13,6 +14,7 @@
  * Prerequisites:
  * - Supabase must be running: `supabase start` (from ../supabase directory)
  * - Database must be seeded: `supabase db reset` (creates dev user)
+ * - Edge functions must be deployed: `supabase functions deploy`
  *
  * Note: These tests call Supabase directly, not through the app's import store.
  * For full E2E testing through the UI, use Playwright (not yet implemented).
@@ -177,67 +179,171 @@ describe('Import Flow Integration Tests', () => {
 		});
 	});
 
-	describe('4. Full Import Pipeline', () => {
+	describe('4. OCR Edge Function', () => {
 		it(
-			'should complete the full import flow: upload -> create -> update',
+			'should have ocr function deployed and responding',
 			async () => {
-			// Step 1: Upload file
-			const testContent = new Uint8Array([0xff, 0xd8, 0xff, 0xe0]); // JPEG header
-			const testFile = new Blob([testContent], { type: 'image/jpeg' });
-			const filename = `integration_test_${Date.now()}.jpg`;
-			const path = `${userId}/${filename}`;
+				// Test that the OCR edge function exists and responds
+				// This catches the case where the function wasn't deployed
+				const response = await fetch(`${SUPABASE_URL}/functions/v1/ocr`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						image: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+						mimeType: 'image/png'
+					})
+				});
 
-			const { error: uploadError } = await supabase.storage
-				.from('patches')
-				.upload(path, testFile, { cacheControl: '3600', upsert: false });
+				// Function should exist (not return 404 "Function not found")
+				expect(response.status).not.toBe(404);
 
-			expect(uploadError).toBeNull();
-			uploadedPaths.push(path);
+				// Should return valid JSON
+				const data = await response.json();
 
-			// Step 2: Create patch record
-			const { data: patch, error: createError } = await supabase
-				.from('patches')
-				.insert({
-					user_id: userId,
-					status: 'processing',
-					image_path: path,
-					original_filename: filename,
-					extracted_text: '',
-					confidence_data: { overall: 0 }
-				})
-				.select()
-				.single();
+				// Should have either text (success) or error (API key missing), but NOT "Function not found"
+				expect(data).toBeDefined();
+				expect(data.error).not.toBe('Function not found');
 
-			expect(createError).toBeNull();
-			expect(patch).toBeDefined();
-			createdPatchIds.push(patch.id);
+				// If we get text back, OCR is fully working
+				if (data.text) {
+					expect(typeof data.text).toBe('string');
+				}
+			},
+			TEST_TIMEOUT
+		);
 
-			// Step 3: Simulate OCR completion
-			const { data: updated, error: updateError } = await supabase
-				.from('patches')
-				.update({
-					status: 'ready',
-					extracted_text: 'Integration test content',
-					confidence_data: { overall: 0.92 }
-				})
-				.eq('id', patch.id)
-				.select()
-				.single();
+		it(
+			'should return OCR text for a valid image',
+			async () => {
+				// A simple 1x1 white PNG - not much to OCR but should return something
+				const response = await fetch(`${SUPABASE_URL}/functions/v1/ocr`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						image: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==',
+						mimeType: 'image/png'
+					})
+				});
 
-			expect(updateError).toBeNull();
-			expect(updated.status).toBe('ready');
-			expect(updated.extracted_text).toBe('Integration test content');
+				expect(response.ok).toBe(true);
 
-			// Step 4: Verify patch exists and is queryable
-			const { data: fetched, error: fetchError } = await supabase
-				.from('patches')
-				.select('*')
-				.eq('id', patch.id)
-				.single();
+				const data = await response.json();
 
-			expect(fetchError).toBeNull();
-			expect(fetched.id).toBe(patch.id);
-			expect(fetched.status).toBe('ready');
+				// Should have text field (even if empty or mock)
+				expect(data).toHaveProperty('text');
+				expect(typeof data.text).toBe('string');
+			},
+			TEST_TIMEOUT
+		);
+
+		it(
+			'should reject requests without image',
+			async () => {
+				const response = await fetch(`${SUPABASE_URL}/functions/v1/ocr`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({})
+				});
+
+				expect(response.status).toBe(400);
+
+				const data = await response.json();
+				expect(data.error).toContain('image');
+			},
+			TEST_TIMEOUT
+		);
+	});
+
+	describe('5. Full Import Pipeline', () => {
+		it(
+			'should complete the full import flow: upload -> create -> OCR -> update',
+			async () => {
+				// Step 1: Upload file
+				const testContent = new Uint8Array([0xff, 0xd8, 0xff, 0xe0]); // JPEG header
+				const testFile = new Blob([testContent], { type: 'image/jpeg' });
+				const filename = `integration_test_${Date.now()}.jpg`;
+				const path = `${userId}/${filename}`;
+
+				const { error: uploadError } = await supabase.storage
+					.from('patches')
+					.upload(path, testFile, { cacheControl: '3600', upsert: false });
+
+				expect(uploadError).toBeNull();
+				uploadedPaths.push(path);
+
+				// Step 2: Create patch record
+				const { data: patch, error: createError } = await supabase
+					.from('patches')
+					.insert({
+						user_id: userId,
+						status: 'processing',
+						image_path: path,
+						original_filename: filename,
+						extracted_text: '',
+						confidence_data: { overall: 0 }
+					})
+					.select()
+					.single();
+
+				expect(createError).toBeNull();
+				expect(patch).toBeDefined();
+				createdPatchIds.push(patch.id);
+
+				// Step 3: Actually call OCR edge function (not simulated!)
+				// Use a tiny test image - 1x1 white PNG
+				const testImageBase64 =
+					'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==';
+
+				const ocrResponse = await fetch(`${SUPABASE_URL}/functions/v1/ocr`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						image: testImageBase64,
+						mimeType: 'image/png'
+					})
+				});
+
+				// OCR function must be deployed and working
+				expect(ocrResponse.status).not.toBe(404);
+				expect(ocrResponse.ok).toBe(true);
+
+				const ocrResult = await ocrResponse.json();
+				expect(ocrResult).toHaveProperty('text');
+
+				// Step 4: Update patch with real OCR results
+				const { data: updated, error: updateError } = await supabase
+					.from('patches')
+					.update({
+						status: 'ready',
+						extracted_text: ocrResult.text,
+						confidence_data: { overall: 0.95 }
+					})
+					.eq('id', patch.id)
+					.select()
+					.single();
+
+				expect(updateError).toBeNull();
+				expect(updated.status).toBe('ready');
+				expect(typeof updated.extracted_text).toBe('string');
+
+				// Step 5: Verify patch exists and is queryable
+				const { data: fetched, error: fetchError } = await supabase
+					.from('patches')
+					.select('*')
+					.eq('id', patch.id)
+					.single();
+
+				expect(fetchError).toBeNull();
+				expect(fetched.id).toBe(patch.id);
+				expect(fetched.status).toBe('ready');
 			},
 			TEST_TIMEOUT
 		);
