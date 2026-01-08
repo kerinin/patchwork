@@ -194,6 +194,8 @@ export interface OcrResult {
 	text: string;
 	confidence: number;
 	words: OcrWord[];
+	/** Whether the OCR output needs manual review (contains <mark> tags or failed) */
+	needs_review: boolean;
 }
 
 export interface OcrWord {

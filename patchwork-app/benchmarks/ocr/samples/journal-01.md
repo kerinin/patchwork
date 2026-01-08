@@ -4,9 +4,9 @@ March 12
 get back to sleep. Made coffee and watched the sun
 come up over the rooftops.
 
-	The plumber finally came about the kitchen sink.
+	The <del>xxxxxxx</del> plumber finally came about the kitchen sink.
 Three weeks of waiting and it took him twenty minutes
-to fix. The bill: $45.00. Highway robbery, but what
+to fix. The bill: $45.00. Highway robbery, but what <del>xxxxxxx</del>
 can you do?
 
 	Afternoon: walked to the library. Returned the

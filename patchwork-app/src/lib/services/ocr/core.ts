@@ -1,8 +1,13 @@
 /**
  * OCR Core - OpenAI Vision via Edge Function
  *
- * Uses OpenAI GPT-4.1-nano for OCR with optimized prompt.
+ * Uses OpenAI GPT-4o for OCR with confidence markup.
  * Calls Supabase Edge Function to keep API key secure.
+ *
+ * HTML Markup in output:
+ * - <del>text</del> — Text crossed out in original
+ * - <mark>text</mark> — Uncertain/illegible text (triggers needs_review)
+ * - <u data-alt="correct">text</u> — Likely typo in original
  */
 
 import type { OcrResult } from '$lib/types/models';
@@ -110,19 +115,20 @@ export async function performOcr(
 
 	onProgress?.('OCR complete!');
 
-	// OpenAI Vision produces high-quality output, use high confidence
 	return {
 		text: result.text,
-		confidence: 95,
-		words: [] // OpenAI doesn't provide word-level bounding boxes
+		confidence: result.needs_review ? 50 : 95, // Lower confidence if needs review
+		words: [], // OpenAI doesn't provide word-level bounding boxes
+		needs_review: result.needs_review ?? false
 	};
 }
 
 /**
  * Determines if OCR result needs manual review.
+ * Uses the needs_review flag from the API (based on <mark> tags or OCR_FAILED).
  */
 export function needsReview(result: OcrResult): boolean {
-	return result.confidence < CONFIDENCE_THRESHOLD || result.text.length < 10;
+	return result.needs_review || result.text.length < 10;
 }
 
 /**

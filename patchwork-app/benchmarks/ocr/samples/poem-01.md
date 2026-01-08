@@ -1,6 +1,6 @@
 THE MORNING TRAIN
 
-	The platform empty, still, and grey,
+	The <del>xxxxxxx</del> platform empty, still, and grey,
 	Before the crowd arrives --
 	I stand alone and watch the rails
 	Stretch out like silver knives.

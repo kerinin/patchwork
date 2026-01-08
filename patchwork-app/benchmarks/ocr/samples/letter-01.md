@@ -3,7 +3,7 @@ October 15, 1962
 Dear Margaret,
 
 	I hope this letter finds you well. It has been
-far too long since we last spoke, and I find myself
+far too long since we last <del>xxxx</del> spoke, and I find myself
 thinking of our conversations often.
 
 	The autumn here has been particularly beautiful
@@ -13,10 +13,10 @@ still producing tomatoes despite the cooler nights.
 
 	I wanted to ask about the book you mentioned --
 the one about the lighthouse keeper. I have been
-unable to find it at our local shop, and wondered
+<del>xxxxxxxxxxxxx</del> unable to find it at our local shop, and wondered
 if you might send me the author's name.
 
 		With warm regards,
-		Eleanor
+		Elanor
 
 P.S. - Do give my best to your mother.

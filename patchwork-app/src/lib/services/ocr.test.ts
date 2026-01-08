@@ -102,25 +102,27 @@ describe('ocr service', () => {
 	});
 
 	describe('needsReview', () => {
-		it('should return true for low confidence', async () => {
+		it('should return true when needs_review flag is set', async () => {
 			const { needsReview } = await import('./ocr');
 
 			const result: OcrResult = {
-				text: 'Some extracted text here',
-				confidence: 70,
-				words: []
+				text: 'Some <mark>unclear</mark> text here',
+				confidence: 50,
+				words: [],
+				needs_review: true
 			};
 
 			expect(needsReview(result)).toBe(true);
 		});
 
-		it('should return false for high confidence with substantial text', async () => {
+		it('should return false when needs_review flag is not set', async () => {
 			const { needsReview } = await import('./ocr');
 
 			const result: OcrResult = {
 				text: 'This is extracted text from OCR',
 				confidence: 95,
-				words: []
+				words: [],
+				needs_review: false
 			};
 
 			expect(needsReview(result)).toBe(false);
@@ -132,7 +134,8 @@ describe('ocr service', () => {
 			const result: OcrResult = {
 				text: 'Hi',
 				confidence: 95,
-				words: []
+				words: [],
+				needs_review: false
 			};
 
 			expect(needsReview(result)).toBe(true);
@@ -144,7 +147,8 @@ describe('ocr service', () => {
 			const result: OcrResult = {
 				text: '',
 				confidence: 95,
-				words: []
+				words: [],
+				needs_review: false
 			};
 
 			expect(needsReview(result)).toBe(true);
@@ -158,7 +162,8 @@ describe('ocr service', () => {
 			const result: OcrResult = {
 				text: 'OCR extracted text',
 				confidence: 95,
-				words: []
+				words: [],
+				needs_review: false
 			};
 
 			expect(getLowConfidenceWords(result)).toHaveLength(0);

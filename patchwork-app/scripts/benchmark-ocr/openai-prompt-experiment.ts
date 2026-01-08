@@ -11,7 +11,7 @@ import * as path from 'path';
 import OpenAI from 'openai';
 import { calculateCER, calculateSemanticSimilarity } from './metrics';
 
-const MODEL_ID = 'gpt-4.1-nano';  // Best cost/performance ratio
+let MODEL_ID = 'gpt-4.1-nano';  // Best cost/performance ratio (can override with --model)
 
 // Prompt variants to test
 const PROMPTS: Record<string, string> = {
@@ -148,7 +148,32 @@ Rules:
 - Preserve indentation with spaces
 - Keep original line breaks
 
-Transcribe the image now:`
+Transcribe the image now:`,
+
+	// Confidence markup - adds HTML tags for uncertain/problematic text
+	'confidence-markup': `Transcribe this typewritten document.
+
+If the image is not a document or is unreadable, output only:
+<!-- OCR_FAILED: brief reason -->
+
+For readable documents, output clean text. Use HTML markup sparingly:
+
+<del> — Text physically crossed out with X's or strikethrough. Preserve the X's.
+Example: "The XXXXX quick fox" → "The <del>XXXXX</del> quick fox"
+Example: "I went to XXX the store" → "I went to <del>XXX</del> the store"
+
+<mark> — Text you genuinely cannot read (smudged, faded, illegible).
+Example: Illegible smudge → "Dear <mark>???</mark>,"
+Example: Faded letter → "<mark>M</mark>aple Street"
+
+<u data-alt="correct"> — Clear text that appears to be a typo in the original.
+Example: "teh house" → "<u data-alt="the">teh</u> house"
+Example: "definately" → "<u data-alt="definitely">definately</u>"
+
+When text is unclear but inferable from context, just infer it (no markup).
+Most documents need NO markup at all.
+
+Output the transcription:`
 };
 
 interface TestCase {
@@ -228,6 +253,7 @@ async function main(): Promise<void> {
 	for (let i = 0; i < args.length; i++) {
 		if (args[i] === '--case' && args[i + 1]) testCaseFilter = args[++i];
 		if (args[i] === '--prompt' && args[i + 1]) promptFilter = args[++i];
+		if (args[i] === '--model' && args[i + 1]) MODEL_ID = args[++i];
 		if (args[i] === '--verbose' || args[i] === '-v') verbose = true;
 	}
 
