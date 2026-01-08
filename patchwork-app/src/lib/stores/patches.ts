@@ -1,5 +1,5 @@
 import { writable, get } from 'svelte/store';
-import type { Patch, PatchStatus } from '$types/models';
+import type { Patch, PatchStatus, OcrCorrections } from '$types/models';
 import { patches as patchesApi, subscribeToPatchChanges, isSupabaseAvailable } from '$services/supabase';
 import { generateSuggestion, applySuggestedAction } from '$services/functions';
 import type { RealtimeChannel } from '@supabase/supabase-js';
@@ -144,6 +144,30 @@ export async function acceptPatchSuggestion(patchId: string): Promise<boolean> {
 export async function discardPatch(patchId: string): Promise<boolean> {
 	const updated = await updatePatchStatus(patchId, 'discarded');
 	return !!updated;
+}
+
+/**
+ * Update OCR corrections for a patch (non-destructive edits).
+ */
+export async function updatePatchCorrections(
+	patchId: string,
+	corrections: OcrCorrections
+): Promise<boolean> {
+	if (!isSupabaseAvailable()) return false;
+
+	try {
+		await patchesApi.update(patchId, { ocr_corrections: corrections });
+
+		// Update local store
+		patches.update((current) =>
+			current.map((p) => (p.id === patchId ? { ...p, ocr_corrections: corrections } : p))
+		);
+
+		return true;
+	} catch (err) {
+		console.error('Failed to update patch corrections:', err);
+		return false;
+	}
 }
 
 /**

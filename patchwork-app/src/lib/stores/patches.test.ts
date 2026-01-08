@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { get } from 'svelte/store';
-import type { Patch, SuggestedAction } from '$types/models';
+import type { Patch, SuggestedAction, OcrCorrections } from '$types/models';
 
 // Mock data
 const mockPatches: Patch[] = [
@@ -40,6 +40,7 @@ const mockPatches: Patch[] = [
 const mockPatchesApi = {
 	list: vi.fn(),
 	get: vi.fn(),
+	update: vi.fn(),
 	updateStatus: vi.fn()
 };
 
@@ -475,6 +476,41 @@ describe('patches store', () => {
 			storeModule.subscribeToPatches();
 
 			expect(mockSubscribeToPatchChanges).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('updatePatchCorrections', () => {
+		it('should update patch corrections and persist to database', async () => {
+			const corrections: OcrCorrections = { 'mark-0': { resolved: true, value: 'test' } };
+			const updatedPatch = { ...mockPatches[0], ocr_corrections: corrections };
+			mockPatchesApi.update.mockResolvedValueOnce(updatedPatch);
+			storeModule.patches.set([...mockPatches]);
+
+			const result = await storeModule.updatePatchCorrections('p1', corrections);
+
+			expect(result).toBe(true);
+			expect(mockPatchesApi.update).toHaveBeenCalledWith('p1', { ocr_corrections: corrections });
+			expect(get(storeModule.patches)[0].ocr_corrections).toEqual(corrections);
+		});
+
+		it('should return false on error', async () => {
+			const corrections: OcrCorrections = { 'mark-0': { resolved: true, value: 'test' } };
+			mockPatchesApi.update.mockRejectedValueOnce(new Error('Update failed'));
+			storeModule.patches.set([...mockPatches]);
+
+			const result = await storeModule.updatePatchCorrections('p1', corrections);
+
+			expect(result).toBe(false);
+		});
+
+		it('should return false when supabase unavailable', async () => {
+			mockIsSupabaseAvailable.mockReturnValue(false);
+			const corrections: OcrCorrections = { 'mark-0': { resolved: true, value: 'test' } };
+
+			const result = await storeModule.updatePatchCorrections('p1', corrections);
+
+			expect(result).toBe(false);
+			expect(mockPatchesApi.update).not.toHaveBeenCalled();
 		});
 	});
 });
