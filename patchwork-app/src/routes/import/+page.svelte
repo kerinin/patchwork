@@ -3,8 +3,9 @@
 	import DropZone from '$lib/components/import/DropZone.svelte';
 	import PatchCard from '$lib/components/import/PatchCard.svelte';
 	import { importState, processingItems, hasErrors, retryItem } from '$lib/stores/import';
+	import { updatePatchCorrections } from '$lib/stores/patches';
 	import { patches as patchesApi } from '$lib/services/supabase';
-	import type { Patch } from '$lib/types/models';
+	import type { Patch, OcrCorrections } from '$lib/types/models';
 
 	let needsReviewPatches = $state<Patch[]>([]);
 	let allPatches = $state<Patch[]>([]);
@@ -45,6 +46,23 @@
 			loadPatches();
 		}
 	});
+
+	// Debounce map for saving corrections
+	const saveTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
+
+	function handleCorrectionsChange(patchId: string, corrections: OcrCorrections) {
+		// Clear existing timeout for this patch
+		const existing = saveTimeouts.get(patchId);
+		if (existing) clearTimeout(existing);
+
+		// Debounce save by 500ms
+		const timeout = setTimeout(() => {
+			updatePatchCorrections(patchId, corrections);
+			saveTimeouts.delete(patchId);
+		}, 500);
+
+		saveTimeouts.set(patchId, timeout);
+	}
 </script>
 
 <DropZone>
@@ -136,7 +154,7 @@
 		{:else}
 			<div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
 				{#each showAll ? allPatches : needsReviewPatches as patch (patch.id)}
-					<PatchCard {patch} />
+					<PatchCard {patch} onCorrectionsChange={handleCorrectionsChange} />
 				{/each}
 			</div>
 		{/if}
