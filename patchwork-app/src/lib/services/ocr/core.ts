@@ -31,9 +31,13 @@ export const CONFIDENCE_THRESHOLD = 85;
 export const VLM_MODEL_ID = 'HuggingFaceTB/SmolVLM-256M-Instruct';
 
 // Default OCR prompt for VLM
-export const DEFAULT_VLM_PROMPT = `Extract all text from this document image.
-Output only the extracted text, preserving paragraphs and line breaks.
-Do not describe the image or add any commentary.`;
+// Determined via prompt experiment - "format-focus" performed best
+export const DEFAULT_VLM_PROMPT = `Extract and transcribe all text from this typewritten document.
+Preserve the original formatting:
+- Keep line breaks where they appear
+- Maintain paragraph spacing
+- Preserve indentation and alignment
+Output only the transcribed text.`;
 
 // ============================================================================
 // VLM State

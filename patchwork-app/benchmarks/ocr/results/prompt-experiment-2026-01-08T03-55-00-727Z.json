@@ -1,0 +1,538 @@
+{
+  "timestamp": "2026-01-08T03:55:00.728Z",
+  "model": "HuggingFaceTB/SmolVLM-256M-Instruct",
+  "prompts": {
+    "baseline": "Extract all text from this document image.\nOutput only the extracted text, preserving paragraphs and line breaks.\nDo not describe the image or add any commentary.",
+    "forceful": "TRANSCRIBE this document exactly as written.\nCopy every word, every line, every paragraph from top to bottom.\nOutput ONLY the transcribed text - no descriptions, no commentary.",
+    "role-ocr": "You are an OCR (Optical Character Recognition) system.\nYour task is to read and output ALL text visible in this image.\nStart from the top-left and read to the bottom-right.\nOutput the exact text, preserving line breaks and formatting.",
+    "no-describe": "Read all text in this image and output it exactly.\nIMPORTANT: Do NOT say \"This is a document\" or \"The image shows\" or describe what you see.\nONLY output the actual words written in the document, nothing else.",
+    "step-by-step": "Follow these steps:\n1. Look at the document image carefully\n2. Read ALL text from top to bottom, left to right\n3. Output every word exactly as written\n4. Preserve paragraph breaks and indentation\n5. Do not add any descriptions or explanations",
+    "minimal": "Transcribe all text in this image exactly.",
+    "format-focus": "Extract and transcribe all text from this typewritten document.\nPreserve the original formatting:\n- Keep line breaks where they appear\n- Maintain paragraph spacing\n- Preserve indentation and alignment\nOutput only the transcribed text.",
+    "complete": "Read this ENTIRE document from start to finish.\nDo not stop after the title or first paragraph.\nTranscribe EVERY word on the page, including:\n- Headers and titles\n- All body paragraphs\n- Lists and bullet points\n- Signatures and footnotes\nOutput the complete text only.",
+    "anti-describe": "Transcribe the text in this document image.\n\nWRONG output examples (do NOT do this):\n- \"This is a typed letter dated...\"\n- \"The document contains...\"\n- \"A page with text that reads...\"\n\nCORRECT output: Just the actual words from the document, nothing else.",
+    "technical": "INPUT: Document image\nTASK: Full text extraction\nOUTPUT FORMAT: Raw text only\nREQUIREMENTS:\n- Extract 100% of visible text\n- Maintain original line structure\n- No meta-commentary\n- No image descriptions\nBEGIN TRANSCRIPTION:"
+  },
+  "ranking": [
+    {
+      "promptName": "format-focus",
+      "avgCer": 65.37142857142857,
+      "avgSemantic": 0.74,
+      "passCount": 0,
+      "totalCount": 7,
+      "score": 54.31428571428572,
+      "details": [
+        {
+          "caseId": "story-01",
+          "cer": 80.8,
+          "semantic": 0.57,
+          "passed": false
+        },
+        {
+          "caseId": "poem-01",
+          "cer": 21.4,
+          "semantic": 0.89,
+          "passed": false
+        },
+        {
+          "caseId": "outline-01",
+          "cer": 96,
+          "semantic": 0.67,
+          "passed": false
+        },
+        {
+          "caseId": "meeting-notes-01",
+          "cer": 70.2,
+          "semantic": 0.9,
+          "passed": false
+        },
+        {
+          "caseId": "letter-01",
+          "cer": 15.7,
+          "semantic": 0.89,
+          "passed": false
+        },
+        {
+          "caseId": "journal-01",
+          "cer": 98.8,
+          "semantic": 0.42,
+          "passed": false
+        },
+        {
+          "caseId": "instructions-01",
+          "cer": 74.7,
+          "semantic": 0.84,
+          "passed": false
+        }
+      ]
+    },
+    {
+      "promptName": "forceful",
+      "avgCer": 68.18571428571428,
+      "avgSemantic": 0.7571428571428572,
+      "passCount": 0,
+      "totalCount": 7,
+      "score": 53.76428571428572,
+      "details": [
+        {
+          "caseId": "story-01",
+          "cer": 80.1,
+          "semantic": 0.64,
+          "passed": false
+        },
+        {
+          "caseId": "poem-01",
+          "cer": 52.5,
+          "semantic": 0.81,
+          "passed": false
+        },
+        {
+          "caseId": "outline-01",
+          "cer": 91.9,
+          "semantic": 0.83,
+          "passed": false
+        },
+        {
+          "caseId": "meeting-notes-01",
+          "cer": 46.5,
+          "semantic": 0.88,
+          "passed": false
+        },
+        {
+          "caseId": "letter-01",
+          "cer": 11,
+          "semantic": 0.91,
+          "passed": false
+        },
+        {
+          "caseId": "journal-01",
+          "cer": 98.8,
+          "semantic": 0.42,
+          "passed": false
+        },
+        {
+          "caseId": "instructions-01",
+          "cer": 96.5,
+          "semantic": 0.81,
+          "passed": false
+        }
+      ]
+    },
+    {
+      "promptName": "role-ocr",
+      "avgCer": 69.72857142857143,
+      "avgSemantic": 0.7385714285714285,
+      "passCount": 0,
+      "totalCount": 7,
+      "score": 52.06428571428572,
+      "details": [
+        {
+          "caseId": "story-01",
+          "cer": 94.7,
+          "semantic": 0.56,
+          "passed": false
+        },
+        {
+          "caseId": "poem-01",
+          "cer": 20.7,
+          "semantic": 0.89,
+          "passed": false
+        },
+        {
+          "caseId": "outline-01",
+          "cer": 96.3,
+          "semantic": 0.69,
+          "passed": false
+        },
+        {
+          "caseId": "meeting-notes-01",
+          "cer": 70.1,
+          "semantic": 0.89,
+          "passed": false
+        },
+        {
+          "caseId": "letter-01",
+          "cer": 11,
+          "semantic": 0.91,
+          "passed": false
+        },
+        {
+          "caseId": "journal-01",
+          "cer": 98.8,
+          "semantic": 0.42,
+          "passed": false
+        },
+        {
+          "caseId": "instructions-01",
+          "cer": 96.5,
+          "semantic": 0.81,
+          "passed": false
+        }
+      ]
+    },
+    {
+      "promptName": "baseline",
+      "avgCer": 75.87142857142858,
+      "avgSemantic": 0.7142857142857144,
+      "passCount": 0,
+      "totalCount": 7,
+      "score": 47.77857142857143,
+      "details": [
+        {
+          "caseId": "story-01",
+          "cer": 94.7,
+          "semantic": 0.56,
+          "passed": false
+        },
+        {
+          "caseId": "poem-01",
+          "cer": 65.3,
+          "semantic": 0.73,
+          "passed": false
+        },
+        {
+          "caseId": "outline-01",
+          "cer": 91.9,
+          "semantic": 0.83,
+          "passed": false
+        },
+        {
+          "caseId": "meeting-notes-01",
+          "cer": 75.1,
+          "semantic": 0.89,
+          "passed": false
+        },
+        {
+          "caseId": "letter-01",
+          "cer": 11,
+          "semantic": 0.91,
+          "passed": false
+        },
+        {
+          "caseId": "journal-01",
+          "cer": 98.8,
+          "semantic": 0.42,
+          "passed": false
+        },
+        {
+          "caseId": "instructions-01",
+          "cer": 94.3,
+          "semantic": 0.66,
+          "passed": false
+        }
+      ]
+    },
+    {
+      "promptName": "technical",
+      "avgCer": 75.15714285714286,
+      "avgSemantic": 0.6985714285714286,
+      "passCount": 0,
+      "totalCount": 7,
+      "score": 47.35,
+      "details": [
+        {
+          "caseId": "story-01",
+          "cer": 69.9,
+          "semantic": 0.7,
+          "passed": false
+        },
+        {
+          "caseId": "poem-01",
+          "cer": 70,
+          "semantic": 0.83,
+          "passed": false
+        },
+        {
+          "caseId": "outline-01",
+          "cer": 96.1,
+          "semantic": 0.68,
+          "passed": false
+        },
+        {
+          "caseId": "meeting-notes-01",
+          "cer": 97.5,
+          "semantic": 0.39,
+          "passed": false
+        },
+        {
+          "caseId": "letter-01",
+          "cer": 14,
+          "semantic": 0.87,
+          "passed": false
+        },
+        {
+          "caseId": "journal-01",
+          "cer": 82,
+          "semantic": 0.61,
+          "passed": false
+        },
+        {
+          "caseId": "instructions-01",
+          "cer": 96.6,
+          "semantic": 0.81,
+          "passed": false
+        }
+      ]
+    },
+    {
+      "promptName": "complete",
+      "avgCer": 75.65714285714286,
+      "avgSemantic": 0.6900000000000001,
+      "passCount": 0,
+      "totalCount": 7,
+      "score": 46.67142857142857,
+      "details": [
+        {
+          "caseId": "story-01",
+          "cer": 80.1,
+          "semantic": 0.53,
+          "passed": false
+        },
+        {
+          "caseId": "poem-01",
+          "cer": 52.8,
+          "semantic": 0.82,
+          "passed": false
+        },
+        {
+          "caseId": "outline-01",
+          "cer": 96,
+          "semantic": 0.68,
+          "passed": false
+        },
+        {
+          "caseId": "meeting-notes-01",
+          "cer": 94.3,
+          "semantic": 0.66,
+          "passed": false
+        },
+        {
+          "caseId": "letter-01",
+          "cer": 11,
+          "semantic": 0.91,
+          "passed": false
+        },
+        {
+          "caseId": "journal-01",
+          "cer": 98.8,
+          "semantic": 0.42,
+          "passed": false
+        },
+        {
+          "caseId": "instructions-01",
+          "cer": 96.6,
+          "semantic": 0.81,
+          "passed": false
+        }
+      ]
+    },
+    {
+      "promptName": "no-describe",
+      "avgCer": 74.5,
+      "avgSemantic": 0.6742857142857144,
+      "passCount": 0,
+      "totalCount": 7,
+      "score": 46.46428571428572,
+      "details": [
+        {
+          "caseId": "story-01",
+          "cer": 97.3,
+          "semantic": 0.45,
+          "passed": false
+        },
+        {
+          "caseId": "poem-01",
+          "cer": 25.1,
+          "semantic": 0.92,
+          "passed": false
+        },
+        {
+          "caseId": "outline-01",
+          "cer": 96,
+          "semantic": 0.68,
+          "passed": false
+        },
+        {
+          "caseId": "meeting-notes-01",
+          "cer": 94.5,
+          "semantic": 0.66,
+          "passed": false
+        },
+        {
+          "caseId": "letter-01",
+          "cer": 15.9,
+          "semantic": 0.89,
+          "passed": false
+        },
+        {
+          "caseId": "journal-01",
+          "cer": 98.8,
+          "semantic": 0.42,
+          "passed": false
+        },
+        {
+          "caseId": "instructions-01",
+          "cer": 93.9,
+          "semantic": 0.7,
+          "passed": false
+        }
+      ]
+    },
+    {
+      "promptName": "anti-describe",
+      "avgCer": 133.1142857142857,
+      "avgSemantic": 0.27285714285714285,
+      "passCount": 0,
+      "totalCount": 7,
+      "score": -2.9142857142857075,
+      "details": [
+        {
+          "caseId": "story-01",
+          "cer": 90.9,
+          "semantic": 0.25,
+          "passed": false
+        },
+        {
+          "caseId": "poem-01",
+          "cer": 357.4,
+          "semantic": 0.45,
+          "passed": false
+        },
+        {
+          "caseId": "outline-01",
+          "cer": 96.3,
+          "semantic": 0.15,
+          "passed": false
+        },
+        {
+          "caseId": "meeting-notes-01",
+          "cer": 97.5,
+          "semantic": 0.39,
+          "passed": false
+        },
+        {
+          "caseId": "letter-01",
+          "cer": 97.3,
+          "semantic": 0.34,
+          "passed": false
+        },
+        {
+          "caseId": "journal-01",
+          "cer": 95.6,
+          "semantic": 0.25,
+          "passed": false
+        },
+        {
+          "caseId": "instructions-01",
+          "cer": 96.8,
+          "semantic": 0.08,
+          "passed": false
+        }
+      ]
+    },
+    {
+      "promptName": "minimal",
+      "avgCer": 174.74285714285716,
+      "avgSemantic": 0.62,
+      "passCount": 0,
+      "totalCount": 7,
+      "score": -6.371428571428581,
+      "details": [
+        {
+          "caseId": "story-01",
+          "cer": 91.2,
+          "semantic": 0.47,
+          "passed": false
+        },
+        {
+          "caseId": "poem-01",
+          "cer": 42.8,
+          "semantic": 0.77,
+          "passed": false
+        },
+        {
+          "caseId": "outline-01",
+          "cer": 90.2,
+          "semantic": 0.64,
+          "passed": false
+        },
+        {
+          "caseId": "meeting-notes-01",
+          "cer": 415.3,
+          "semantic": 0.61,
+          "passed": false
+        },
+        {
+          "caseId": "letter-01",
+          "cer": 24.8,
+          "semantic": 0.9,
+          "passed": false
+        },
+        {
+          "caseId": "journal-01",
+          "cer": 466.1,
+          "semantic": 0.44,
+          "passed": false
+        },
+        {
+          "caseId": "instructions-01",
+          "cer": 92.8,
+          "semantic": 0.51,
+          "passed": false
+        }
+      ]
+    },
+    {
+      "promptName": "step-by-step",
+      "avgCer": 206.24285714285716,
+      "avgSemantic": 0.3685714285714286,
+      "passCount": 0,
+      "totalCount": 7,
+      "score": -34.69285714285715,
+      "details": [
+        {
+          "caseId": "story-01",
+          "cer": 603.2,
+          "semantic": 0.41,
+          "passed": false
+        },
+        {
+          "caseId": "poem-01",
+          "cer": 97.4,
+          "semantic": 0.32,
+          "passed": false
+        },
+        {
+          "caseId": "outline-01",
+          "cer": 95.5,
+          "semantic": 0.09,
+          "passed": false
+        },
+        {
+          "caseId": "meeting-notes-01",
+          "cer": 75.9,
+          "semantic": 0.79,
+          "passed": false
+        },
+        {
+          "caseId": "letter-01",
+          "cer": 99,
+          "semantic": 0.11,
+          "passed": false
+        },
+        {
+          "caseId": "journal-01",
+          "cer": 79.2,
+          "semantic": 0.16,
+          "passed": false
+        },
+        {
+          "caseId": "instructions-01",
+          "cer": 393.5,
+          "semantic": 0.7,
+          "passed": false
+        }
+      ]
+    }
+  ]
+}
