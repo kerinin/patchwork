@@ -7,14 +7,9 @@
 
 export {
 	performOcr,
-	preloadVlm,
-	isVlmReady,
-	resetVlmState,
 	needsReview,
 	getLowConfidenceWords,
 	terminateOcr,
-	CONFIDENCE_THRESHOLD,
-	VLM_MODEL_ID,
-	DEFAULT_VLM_PROMPT
+	CONFIDENCE_THRESHOLD
 } from './ocr/index';
 export type { OcrConfig } from './ocr/index';

@@ -151,7 +151,7 @@ describe('import store', () => {
 					original_filename: 'test.jpg'
 				})
 			);
-			expect(mockPerformOcr).toHaveBeenCalledWith(file, expect.objectContaining({ onProgress: expect.any(Function) }));
+			expect(mockPerformOcr).toHaveBeenCalledWith(file);
 			expect(mockUpdatePatch).toHaveBeenCalledWith(
 				'patch-456',
 				expect.objectContaining({
