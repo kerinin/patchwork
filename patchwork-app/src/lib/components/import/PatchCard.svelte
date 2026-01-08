@@ -1,13 +1,23 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { storage } from '$lib/services/supabase';
-	import type { Patch } from '$lib/types/models';
+	import type { Patch, OcrCorrections } from '$lib/types/models';
+	import OcrReviewController from './OcrReviewController.svelte';
 
 	interface Props {
 		patch: Patch;
+		onCorrectionsChange?: (patchId: string, corrections: OcrCorrections) => void;
 	}
 
-	let { patch }: Props = $props();
+	let { patch, onCorrectionsChange }: Props = $props();
+
+	// Local corrections state, initialized from patch
+	let corrections: OcrCorrections = $state(patch.ocr_corrections ?? {});
+
+	function handleCorrectionsChange(newCorrections: OcrCorrections) {
+		corrections = newCorrections;
+		onCorrectionsChange?.(patch.id, newCorrections);
+	}
 
 	let imageUrl = $state<string | null>(null);
 	let imageError = $state(false);
@@ -87,34 +97,15 @@
 			</div>
 			<div class="flex-1 overflow-auto">
 				{#if patch.extracted_text}
-					<p class="text-sm text-ink whitespace-pre-wrap font-mono leading-relaxed">
-						{patch.extracted_text}
-					</p>
+					<OcrReviewController
+						text={patch.extracted_text}
+						{corrections}
+						onCorrectionsChange={handleCorrectionsChange}
+					/>
 				{:else}
-					<p class="text-sm text-ink-light italic">No text extracted</p>
+					<span class="text-gray-400 italic">No text extracted</span>
 				{/if}
 			</div>
-
-			<!-- Confidence indicator -->
-			{#if patch.confidence_data?.overall}
-				<div class="mt-3 pt-3 border-t border-paper-dark">
-					<div class="flex items-center justify-between text-xs">
-						<span class="text-ink-light">OCR Confidence</span>
-						<span class="font-medium" class:text-green-600={patch.confidence_data.overall >= 0.9} class:text-yellow-600={patch.confidence_data.overall >= 0.7 && patch.confidence_data.overall < 0.9} class:text-red-600={patch.confidence_data.overall < 0.7}>
-							{Math.round(patch.confidence_data.overall * 100)}%
-						</span>
-					</div>
-					<div class="mt-1 h-1.5 rounded-full bg-paper-dark overflow-hidden">
-						<div
-							class="h-full rounded-full transition-all"
-							class:bg-green-500={patch.confidence_data.overall >= 0.9}
-							class:bg-yellow-500={patch.confidence_data.overall >= 0.7 && patch.confidence_data.overall < 0.9}
-							class:bg-red-500={patch.confidence_data.overall < 0.7}
-							style="width: {patch.confidence_data.overall * 100}%"
-						></div>
-					</div>
-				</div>
-			{/if}
 		</div>
 	</div>
 </div>
