@@ -15,6 +15,7 @@
 		"test:coverage": "vitest run --coverage",
 		"test:e2e": "playwright test",
 		"test:e2e:ui": "playwright test --ui",
+		"benchmark:ocr": "tsx scripts/benchmark-ocr/index.ts",
 		"lint": "npm run check",
 		"tauri": "tauri"
 	},
