@@ -46,6 +46,8 @@ export interface Patch {
 	embedding: number[] | null;
 	confidence_data: ConfidenceData;
 	suggested_action: SuggestedAction | null;
+	/** User corrections to OCR markup, stored separately from extracted_text */
+	ocr_corrections?: OcrCorrections;
 	imported_at: string;
 	reviewed_at: string | null;
 	applied_at: string | null;
@@ -202,6 +204,23 @@ export interface OcrWord {
 	text: string;
 	confidence: number;
 	bounding_box: BoundingBox;
+}
+
+/**
+ * User corrections to OCR output, stored separately from original.
+ * Keys are element IDs like "mark-0", "typo-1", etc.
+ */
+export interface OcrCorrections {
+	[key: string]: OcrCorrection;
+}
+
+export interface OcrCorrection {
+	/** For <mark> elements: the user-provided text */
+	value?: string;
+	/** For <u data-alt> elements: true if suggestion accepted */
+	accepted?: boolean;
+	/** Whether this item has been reviewed */
+	resolved: boolean;
 }
 
 // ============================================================================
