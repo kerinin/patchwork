@@ -39,15 +39,13 @@ export const prepareImage: ImagePreparer = async (
 		targetH = Math.round(origH * scale);
 	}
 
-	// Resize and convert to JPEG buffer
-	const jpegBuffer = await sharp(imageBuffer)
+	// Resize and extract raw RGB pixel data
+	const { data, info } = await sharp(imageBuffer)
 		.resize(targetW, targetH)
-		.jpeg({ quality: 90 })
-		.toBuffer();
+		.removeAlpha()
+		.raw()
+		.toBuffer({ resolveWithObject: true });
 
-	// Convert to base64 data URL for RawImage
-	const base64 = jpegBuffer.toString('base64');
-	const dataUrl = `data:image/jpeg;base64,${base64}`;
-
-	return RawImage.fromURL(dataUrl);
+	// Create RawImage from raw pixel data (RGB, 3 channels)
+	return new RawImage(new Uint8ClampedArray(data), info.width, info.height, 3);
 };

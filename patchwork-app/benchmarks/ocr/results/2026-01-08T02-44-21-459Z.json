@@ -1,0 +1,83 @@
+{
+  "timestamp": "2026-01-08T02:44:21.457Z",
+  "model": "HuggingFaceTB/SmolVLM-256M-Instruct",
+  "modelMemoryMB": 14,
+  "thresholds": {
+    "cer": 10,
+    "semantic": 0.85
+  },
+  "results": [
+    {
+      "id": "hello-world",
+      "category": "printed",
+      "cer": 0,
+      "semantic": 1,
+      "elapsedMs": 2494,
+      "passed": true
+    },
+    {
+      "id": "story-01",
+      "category": "typewritten",
+      "cer": 94.7,
+      "semantic": 0.56,
+      "elapsedMs": 7639,
+      "passed": false
+    },
+    {
+      "id": "poem-01",
+      "category": "typewritten",
+      "cer": 65.3,
+      "semantic": 0.73,
+      "elapsedMs": 7733,
+      "passed": false
+    },
+    {
+      "id": "outline-01",
+      "category": "typewritten",
+      "cer": 91.9,
+      "semantic": 0.83,
+      "elapsedMs": 7488,
+      "passed": false
+    },
+    {
+      "id": "meeting-notes-01",
+      "category": "typewritten",
+      "cer": 75.1,
+      "semantic": 0.89,
+      "elapsedMs": 7958,
+      "passed": false
+    },
+    {
+      "id": "letter-01",
+      "category": "typewritten",
+      "cer": 11,
+      "semantic": 0.91,
+      "elapsedMs": 8864,
+      "passed": false
+    },
+    {
+      "id": "journal-01",
+      "category": "typewritten",
+      "cer": 98.8,
+      "semantic": 0.42,
+      "elapsedMs": 7616,
+      "passed": false
+    },
+    {
+      "id": "instructions-01",
+      "category": "typewritten",
+      "cer": 94.3,
+      "semantic": 0.66,
+      "elapsedMs": 7606,
+      "passed": false
+    }
+  ],
+  "summary": {
+    "total": 8,
+    "passed": 1,
+    "failed": 7,
+    "avgCer": 66.4,
+    "avgSemantic": 0.75,
+    "avgElapsedMs": 7175
+  }
+}

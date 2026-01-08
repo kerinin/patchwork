@@ -1,0 +1,27 @@
+{
+  "timestamp": "2026-01-08T02:43:06.357Z",
+  "model": "HuggingFaceTB/SmolVLM-256M-Instruct",
+  "modelMemoryMB": 17,
+  "thresholds": {
+    "cer": 10,
+    "semantic": 0.85
+  },
+  "results": [
+    {
+      "id": "hello-world",
+      "category": "printed",
+      "cer": 0,
+      "semantic": 1,
+      "elapsedMs": 2414,
+      "passed": true
+    }
+  ],
+  "summary": {
+    "total": 1,
+    "passed": 1,
+    "failed": 0,
+    "avgCer": 0,
+    "avgSemantic": 1,
+    "avgElapsedMs": 2414
+  }
+}

@@ -12,6 +12,55 @@
       "expected": "samples/hello-world.md",
       "category": "printed",
       "notes": "Simple printed text for baseline testing"
+    },
+    {
+      "id": "story-01",
+      "image": "samples/story-01.jpg",
+      "expected": "samples/story-01.md",
+      "category": "typewritten",
+      "notes": "Fiction excerpt - THE CLOCK ON THE MANTLE"
+    },
+    {
+      "id": "poem-01",
+      "image": "samples/poem-01.jpg",
+      "expected": "samples/poem-01.md",
+      "category": "typewritten",
+      "notes": "Poetry with stanzas - THE MORNING TRAIN"
+    },
+    {
+      "id": "outline-01",
+      "image": "samples/outline-01.jpg",
+      "expected": "samples/outline-01.md",
+      "category": "typewritten",
+      "notes": "Lecture outline with Roman numerals and nested lists"
+    },
+    {
+      "id": "meeting-notes-01",
+      "image": "samples/meeting-notes-01.jpg",
+      "expected": "samples/meeting-notes-01.md",
+      "category": "typewritten",
+      "notes": "Meeting minutes with numbered sections and columns"
+    },
+    {
+      "id": "letter-01",
+      "image": "samples/letter-01.jpg",
+      "expected": "samples/letter-01.md",
+      "category": "typewritten",
+      "notes": "Personal letter with date, salutation, signature"
+    },
+    {
+      "id": "journal-01",
+      "image": "samples/journal-01.jpg",
+      "expected": "samples/journal-01.md",
+      "category": "typewritten",
+      "notes": "Diary entry with indents and inline lists"
+    },
+    {
+      "id": "instructions-01",
+      "image": "samples/instructions-01.jpg",
+      "expected": "samples/instructions-01.md",
+      "category": "typewritten",
+      "notes": "Technical how-to with headers and numbered steps"
     }
   ]
 }

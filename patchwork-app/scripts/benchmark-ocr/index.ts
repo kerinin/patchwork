@@ -198,13 +198,10 @@ async function main(): Promise<void> {
 			cer: Math.round(cer * 10) / 10,
 			semantic: Math.round(semantic * 100) / 100,
 			elapsedMs,
-			passed
+			passed,
+			actual: ocrResult.text,
+			expected
 		};
-
-		if (verbose) {
-			result.actual = ocrResult.text;
-			result.expected = expected;
-		}
 
 		results.push(result);
 
