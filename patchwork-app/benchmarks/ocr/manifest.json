@@ -5,5 +5,13 @@
     "cer": 10,
     "semantic": 0.85
   },
-  "cases": []
+  "cases": [
+    {
+      "id": "hello-world",
+      "image": "samples/hello-world.png",
+      "expected": "samples/hello-world.md",
+      "category": "printed",
+      "notes": "Simple printed text for baseline testing"
+    }
+  ]
 }
