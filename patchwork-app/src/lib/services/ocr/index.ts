@@ -59,7 +59,9 @@ export async function performOcr(
 	// Load VLM if not already loaded
 	if (!isVlmReady()) {
 		let targetDevice: 'webgpu' | 'wasm' = 'wasm';
-		if (device === 'auto' || device === undefined) {
+		if (device === 'cpu') {
+			throw new Error("'cpu' device is only supported in Node.js. Use 'webgpu', 'wasm', or 'auto'.");
+		} else if (device === 'auto' || device === undefined) {
 			const hasWebGPU = await checkWebGPU();
 			targetDevice = hasWebGPU ? 'webgpu' : 'wasm';
 			onProgress?.(`Detected device: ${targetDevice}`);
