@@ -7,7 +7,14 @@ export default defineConfig({
 		include: ['src/**/*.{test,spec}.{js,ts}'],
 		environment: 'jsdom',
 		globals: true,
-		setupFiles: ['src/tests/setup.ts']
+		setupFiles: ['src/tests/setup.ts'],
+		alias: {
+			// Ensure Svelte 5 uses browser entry point in tests
+			svelte: 'svelte'
+		}
+	},
+	resolve: {
+		conditions: ['browser']
 	},
 	// Tauri expects a fixed port
 	server: {
