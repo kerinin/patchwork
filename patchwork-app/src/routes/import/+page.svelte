@@ -7,9 +7,7 @@
 	import { patches as patchesApi } from '$lib/services/supabase';
 	import type { Patch, OcrCorrections } from '$lib/types/models';
 
-	let needsReviewPatches = $state<Patch[]>([]);
 	let allPatches = $state<Patch[]>([]);
-	let showAll = $state(false);
 	let loading = $state(true);
 
 	// Track unresolved counts per patch
@@ -36,13 +34,8 @@
 
 	async function loadPatches() {
 		try {
-			// Load patches needing review
-			const reviewPatches = await patchesApi.list('needs_review');
-			needsReviewPatches = reviewPatches;
-
-			// Load all patches for "All Patches" view
-			const all = await patchesApi.list();
-			allPatches = all;
+			// Load all patches - UI will show status and collapse resolved ones
+			allPatches = await patchesApi.list();
 		} catch (e: unknown) {
 			console.error('Failed to load patches:', e);
 		}
@@ -82,8 +75,7 @@
 
 	function handleStartReview() {
 		// Find first patch with unresolved items
-		const currentPatches = showAll ? allPatches : needsReviewPatches;
-		for (const patch of currentPatches) {
+		for (const patch of allPatches) {
 			const count = unresolvedCounts.get(patch.id) ?? 0;
 			if (count > 0) {
 				startReviewPatchId = patch.id;
@@ -101,36 +93,20 @@
 		// For now, just trigger review which is more reliable
 		handleStartReview();
 	}
+
+	function handlePatchDelete(patchId: string) {
+		// Remove from patch list
+		allPatches = allPatches.filter((p) => p.id !== patchId);
+		// Remove from unresolved counts
+		unresolvedCounts.delete(patchId);
+		unresolvedCounts = new Map(unresolvedCounts);
+	}
 </script>
 
 <DropZone>
 	<div class="space-y-6">
 		<div class="flex items-center justify-between">
 			<h2 class="font-document text-2xl font-bold text-ink">Import</h2>
-			<div class="flex gap-2">
-				<button
-					type="button"
-					class="rounded-lg px-3 py-1.5 text-sm font-medium transition-colors"
-					class:bg-accent={!showAll}
-					class:text-white={!showAll}
-					class:bg-paper-dark={showAll}
-					class:text-ink-light={showAll}
-					onclick={() => (showAll = false)}
-				>
-					Needs Review
-				</button>
-				<button
-					type="button"
-					class="rounded-lg px-3 py-1.5 text-sm font-medium transition-colors"
-					class:bg-accent={showAll}
-					class:text-white={showAll}
-					class:bg-paper-dark={!showAll}
-					class:text-ink-light={!showAll}
-					onclick={() => (showAll = true)}
-				>
-					All Patches
-				</button>
-			</div>
 		</div>
 
 		<!-- Page-level attention banner -->
@@ -203,27 +179,19 @@
 			<div class="rounded-lg border border-paper-dark bg-white p-8 text-center">
 				<p class="text-ink-light">Loading patches...</p>
 			</div>
-		{:else if !showAll && needsReviewPatches.length === 0}
-			<div class="rounded-lg border border-paper-dark bg-white p-8 text-center">
-				<p class="text-ink-light">No patches need review.</p>
-				<p class="mt-2 text-sm text-ink-light">
-					Drop image files here to import, or
-					<a href="/assemble" class="text-accent hover:underline">go to Assemble</a>
-					to work with your patches.
-				</p>
-			</div>
-		{:else if showAll && allPatches.length === 0}
+		{:else if allPatches.length === 0}
 			<div class="rounded-lg border border-paper-dark bg-white p-8 text-center">
 				<p class="text-ink-light">No patches yet.</p>
 				<p class="mt-2 text-sm text-ink-light">Drop image files here to import pages.</p>
 			</div>
 		{:else}
 			<div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
-				{#each showAll ? allPatches : needsReviewPatches as patch (patch.id)}
+				{#each allPatches as patch (patch.id)}
 					<PatchCard
 						{patch}
 						onCorrectionsChange={handleCorrectionsChange}
 						onUnresolvedCountChange={handleUnresolvedCountChange}
+						onDelete={handlePatchDelete}
 						startReview={startReviewPatchId === patch.id}
 					/>
 				{/each}

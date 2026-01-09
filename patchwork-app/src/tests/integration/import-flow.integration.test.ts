@@ -348,4 +348,89 @@ describe('Import Flow Integration Tests', () => {
 			TEST_TIMEOUT
 		);
 	});
+
+	describe('6. Patch Delete and Update Operations', () => {
+		it('should delete a patch', async () => {
+			// Create a patch to delete
+			const { data: patch, error: createError } = await supabase
+				.from('patches')
+				.insert({
+					user_id: userId,
+					status: 'processing',
+					image_path: `${userId}/delete_test.png`,
+					original_filename: 'delete_test.png',
+					extracted_text: '<!-- OCR_FAILED: Test failure -->',
+					confidence_data: { overall: 0 }
+				})
+				.select()
+				.single();
+
+			expect(createError).toBeNull();
+			expect(patch).toBeDefined();
+
+			// Delete the patch
+			const { error: deleteError } = await supabase
+				.from('patches')
+				.delete()
+				.eq('id', patch.id);
+
+			expect(deleteError).toBeNull();
+
+			// Verify it's gone
+			const { data: fetched, error: fetchError } = await supabase
+				.from('patches')
+				.select('*')
+				.eq('id', patch.id)
+				.single();
+
+			// Should get PGRST116 (no rows returned) or null data
+			expect(fetched).toBeNull();
+		});
+
+		it('should update patch with manual content (Save Content)', async () => {
+			// Create an OCR-failed patch
+			const { data: patch, error: createError } = await supabase
+				.from('patches')
+				.insert({
+					user_id: userId,
+					status: 'processing',
+					image_path: `${userId}/manual_content_test.png`,
+					original_filename: 'manual_content_test.png',
+					extracted_text: '<!-- OCR_FAILED: Could not read -->',
+					confidence_data: { overall: 0 }
+				})
+				.select()
+				.single();
+
+			expect(createError).toBeNull();
+			createdPatchIds.push(patch.id);
+
+			// Update with manual content (simulating Save Content)
+			const manualText = 'This is manually typed content';
+			const { data: updated, error: updateError } = await supabase
+				.from('patches')
+				.update({
+					extracted_text: manualText,
+					status: 'ready'
+				})
+				.eq('id', patch.id)
+				.select()
+				.single();
+
+			expect(updateError).toBeNull();
+			expect(updated.extracted_text).toBe(manualText);
+			expect(updated.status).toBe('ready');
+
+			// Verify the update persisted
+			const { data: fetched, error: fetchError } = await supabase
+				.from('patches')
+				.select('*')
+				.eq('id', patch.id)
+				.single();
+
+			expect(fetchError).toBeNull();
+			expect(fetched.extracted_text).toBe(manualText);
+			expect(fetched.status).toBe('ready');
+		});
+	});
 });

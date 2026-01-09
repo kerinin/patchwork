@@ -153,6 +153,32 @@ describe('ocr service', () => {
 
 			expect(needsReview(result)).toBe(true);
 		});
+
+		it('should return true when text contains <mark> tags even if API flag is false', async () => {
+			const { needsReview } = await import('./ocr');
+
+			const result: OcrResult = {
+				text: 'Some text with <mark>unclear</mark> content here',
+				confidence: 95,
+				words: [],
+				needs_review: false // API didn't set the flag, but text has mark
+			};
+
+			expect(needsReview(result)).toBe(true);
+		});
+
+		it('should return true when OCR failed (OCR_FAILED comment)', async () => {
+			const { needsReview } = await import('./ocr');
+
+			const result: OcrResult = {
+				text: '<!-- OCR_FAILED: Could not read handwriting -->',
+				confidence: 0,
+				words: [],
+				needs_review: false // API might not set the flag
+			};
+
+			expect(needsReview(result)).toBe(true);
+		});
 	});
 
 	describe('getLowConfidenceWords', () => {

@@ -234,3 +234,189 @@ test.describe('Prerequisites Check', () => {
 		expect(localRequests.length).toBeGreaterThan(0);
 	});
 });
+
+test.describe('OCR Failed Patch Handling', () => {
+	let testPatchId: string;
+
+	test.beforeEach(async () => {
+		// Create an OCR-failed patch directly in the database
+		const supabase = getSupabaseAdmin();
+		await supabase.auth.signInWithPassword({
+			email: 'dev@patchwork.local',
+			password: 'devpassword123'
+		});
+
+		const { data } = await supabase
+			.from('patches')
+			.insert({
+				user_id: DEV_USER_ID,
+				status: 'needs_review',
+				image_path: `${DEV_USER_ID}/test_ocr_failed.png`,
+				original_filename: 'test_ocr_failed.png',
+				extracted_text: '<!-- OCR_FAILED: Could not read handwriting -->',
+				confidence_data: { overall: 0 }
+			})
+			.select()
+			.single();
+
+		testPatchId = data!.id;
+	});
+
+	test.afterEach(async () => {
+		// Clean up test patch
+		const supabase = getSupabaseAdmin();
+		await supabase.auth.signInWithPassword({
+			email: 'dev@patchwork.local',
+			password: 'devpassword123'
+		});
+		await supabase.from('patches').delete().eq('id', testPatchId);
+	});
+
+	test('Delete Patch button should delete the patch from database', async ({ page }) => {
+		await page.goto('/import');
+		await page.waitForLoadState('networkidle');
+
+		// Should see the OCR Failed message - target first one
+		await expect(page.locator('text=OCR Failed').first()).toBeVisible({ timeout: 10000 });
+
+		// Get initial count of OCR Failed patches
+		const initialCount = await page.locator('text=OCR Failed').count();
+
+		// Click first Delete Patch button
+		await page.locator('button:has-text("Delete Patch")').first().click();
+
+		// Wait for patch count to decrease
+		await expect(page.locator('text=OCR Failed')).toHaveCount(initialCount - 1, { timeout: 5000 });
+
+		// Verify patch was deleted from database
+		const supabase = getSupabaseAdmin();
+		await supabase.auth.signInWithPassword({
+			email: 'dev@patchwork.local',
+			password: 'devpassword123'
+		});
+		const { data } = await supabase.from('patches').select('id').eq('id', testPatchId).single();
+
+		expect(data).toBeNull();
+	});
+
+	test('Save Content should update patch with manually typed text', async ({ page }) => {
+		await page.goto('/import');
+		await page.waitForLoadState('networkidle');
+
+		// Should see the OCR Failed message - target first one
+		await expect(page.locator('text=OCR Failed').first()).toBeVisible({ timeout: 10000 });
+
+		// Click first Type Content button
+		await page.locator('button:has-text("Type Content")').first().click();
+
+		// Should see textarea
+		const textarea = page.locator('textarea[placeholder*="document content"]');
+		await expect(textarea).toBeVisible();
+
+		// Type some content
+		await textarea.fill('This is my manually typed content');
+
+		// Click Save Content
+		await page.locator('button:has-text("Save Content")').click();
+
+		// Wait for textarea to disappear (content was saved)
+		await expect(textarea).not.toBeVisible({ timeout: 5000 });
+
+		// Verify content was saved to database
+		const supabase = getSupabaseAdmin();
+		await supabase.auth.signInWithPassword({
+			email: 'dev@patchwork.local',
+			password: 'devpassword123'
+		});
+		const { data } = await supabase.from('patches').select('extracted_text, status').eq('id', testPatchId).single();
+
+		expect(data?.extracted_text).toBe('This is my manually typed content');
+		expect(data?.status).toBe('ready');
+	});
+
+	test('OCR-failed patch should show needs_review status, not ready', async ({ page }) => {
+		await page.goto('/import');
+		await page.waitForLoadState('networkidle');
+
+		// Find the patch card that contains "OCR Failed" - use border class to be more specific
+		const patchCard = page.locator('.border.border-paper-dark:has-text("OCR Failed")').first();
+		await expect(patchCard).toBeVisible({ timeout: 10000 });
+
+		// Should have "needs review" status badge (not "ready")
+		const statusBadge = patchCard.locator('.text-xs.font-medium').first();
+		await expect(statusBadge).toContainText('needs review');
+	});
+});
+
+test.describe('Simplified UI', () => {
+	test('should not have Needs Review / All Patches toggle buttons', async ({ page }) => {
+		await page.goto('/import');
+		await page.waitForLoadState('networkidle');
+
+		// These buttons should NOT exist - we always show the same UI
+		await expect(page.locator('button:has-text("Needs Review")')).not.toBeVisible();
+		await expect(page.locator('button:has-text("All Patches")')).not.toBeVisible();
+	});
+});
+
+test.describe('Review Modal Visibility', () => {
+	let testPatchId: string;
+
+	test.beforeEach(async () => {
+		// Create a patch with review items (mark tags)
+		const supabase = getSupabaseAdmin();
+		await supabase.auth.signInWithPassword({
+			email: 'dev@patchwork.local',
+			password: 'devpassword123'
+		});
+
+		const { data } = await supabase
+			.from('patches')
+			.insert({
+				user_id: DEV_USER_ID,
+				status: 'needs_review',
+				image_path: `${DEV_USER_ID}/test_review.png`,
+				original_filename: 'test_review.png',
+				extracted_text: 'Hello <mark>???</mark> world. Go <u data-alt="there">their</u>.',
+				confidence_data: { overall: 0.8 }
+			})
+			.select()
+			.single();
+
+		testPatchId = data!.id;
+	});
+
+	test.afterEach(async () => {
+		const supabase = getSupabaseAdmin();
+		await supabase.auth.signInWithPassword({
+			email: 'dev@patchwork.local',
+			password: 'devpassword123'
+		});
+		await supabase.from('patches').delete().eq('id', testPatchId);
+	});
+
+	test('should show attention banner when patches have unresolved items', async ({ page }) => {
+		await page.goto('/import');
+		await page.waitForLoadState('networkidle');
+
+		// Should see the attention banner with item count
+		await expect(page.locator('text=/\\d+ items? needs? attention/')).toBeVisible({ timeout: 10000 });
+
+		// Should have Start Review button
+		await expect(page.locator('button:has-text("Start Review")')).toBeVisible();
+	});
+
+	test('clicking review item should open the review modal', async ({ page }) => {
+		await page.goto('/import');
+		await page.waitForLoadState('networkidle');
+
+		// Wait for patch card with review items to load
+		await expect(page.locator('.review-item').first()).toBeVisible({ timeout: 10000 });
+
+		// Click on the first mark element (the ??? text)
+		await page.locator('.review-item').first().click();
+
+		// Should open the review dialog
+		await expect(page.locator('[role="dialog"]')).toBeVisible();
+	});
+});

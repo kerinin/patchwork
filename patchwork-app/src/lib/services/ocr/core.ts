@@ -126,9 +126,16 @@ export async function performOcr(
 /**
  * Determines if OCR result needs manual review.
  * Uses the needs_review flag from the API (based on <mark> tags or OCR_FAILED).
+ * Also checks for <mark> tags and OCR_FAILED client-side as a fallback.
  */
 export function needsReview(result: OcrResult): boolean {
-	return result.needs_review || result.text.length < 10;
+	// API flag, text too short, contains <mark> tags, or OCR failed
+	return (
+		result.needs_review ||
+		result.text.length < 10 ||
+		/<mark[^>]*>/.test(result.text) ||
+		/<!--\s*OCR_FAILED/.test(result.text)
+	);
 }
 
 /**
