@@ -12,6 +12,18 @@
 	let showAll = $state(false);
 	let loading = $state(true);
 
+	// Track unresolved counts per patch
+	let unresolvedCounts = $state<Map<string, number>>(new Map());
+	let totalUnresolved = $derived(
+		Array.from(unresolvedCounts.values()).reduce((sum, count) => sum + count, 0)
+	);
+	let patchesWithUnresolved = $derived(
+		Array.from(unresolvedCounts.values()).filter((count) => count > 0).length
+	);
+
+	// Control start review for specific patch
+	let startReviewPatchId = $state<string | null>(null);
+
 	// Reactive store values
 	let importStoreState = $derived($importState);
 	let processing = $derived($processingItems);
@@ -63,6 +75,32 @@
 
 		saveTimeouts.set(patchId, timeout);
 	}
+
+	function handleUnresolvedCountChange(patchId: string, count: number) {
+		unresolvedCounts = new Map(unresolvedCounts).set(patchId, count);
+	}
+
+	function handleStartReview() {
+		// Find first patch with unresolved items
+		const currentPatches = showAll ? allPatches : needsReviewPatches;
+		for (const patch of currentPatches) {
+			const count = unresolvedCounts.get(patch.id) ?? 0;
+			if (count > 0) {
+				startReviewPatchId = patch.id;
+				// Reset after a tick to allow re-triggering
+				setTimeout(() => {
+					startReviewPatchId = null;
+				}, 100);
+				break;
+			}
+		}
+	}
+
+	function handleAcceptAll() {
+		// This would need coordination with the patches to accept all suggestions
+		// For now, just trigger review which is more reliable
+		handleStartReview();
+	}
 </script>
 
 <DropZone>
@@ -94,6 +132,34 @@
 				</button>
 			</div>
 		</div>
+
+		<!-- Page-level attention banner -->
+		{#if totalUnresolved > 0}
+			<div class="rounded-lg border-2 border-amber-300 bg-amber-50 px-4 py-3 flex items-center gap-4">
+				<div class="flex-1">
+					<span class="text-amber-800 font-semibold text-base">
+						{totalUnresolved} item{totalUnresolved === 1 ? '' : 's'} need{totalUnresolved === 1 ? 's' : ''} attention
+					</span>
+					<span class="text-amber-600 text-sm ml-2">
+						across {patchesWithUnresolved} patch{patchesWithUnresolved === 1 ? '' : 'es'}
+					</span>
+				</div>
+				<div class="flex gap-2">
+					<button
+						class="px-3 py-2 text-sm font-medium text-amber-700 hover:bg-amber-100 rounded-lg transition-colors"
+						onclick={handleAcceptAll}
+					>
+						Accept All
+					</button>
+					<button
+						class="px-4 py-2 text-sm font-medium bg-amber-500 hover:bg-amber-600 text-white rounded-lg shadow-sm transition-colors"
+						onclick={handleStartReview}
+					>
+						Start Review
+					</button>
+				</div>
+			</div>
+		{/if}
 
 		<!-- Processing items -->
 		{#if processing.length > 0}
@@ -154,7 +220,12 @@
 		{:else}
 			<div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
 				{#each showAll ? allPatches : needsReviewPatches as patch (patch.id)}
-					<PatchCard {patch} onCorrectionsChange={handleCorrectionsChange} />
+					<PatchCard
+						{patch}
+						onCorrectionsChange={handleCorrectionsChange}
+						onUnresolvedCountChange={handleUnresolvedCountChange}
+						startReview={startReviewPatchId === patch.id}
+					/>
 				{/each}
 			</div>
 		{/if}

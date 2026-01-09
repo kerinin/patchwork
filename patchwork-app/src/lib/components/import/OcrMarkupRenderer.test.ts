@@ -14,14 +14,17 @@ describe('OcrMarkupRenderer', () => {
 		});
 		const del = screen.getByText('XXXX');
 		expect(del.tagName).toBe('DEL');
-		expect(del).toHaveClass('text-red-400');
+		expect(del).toHaveClass('line-through');
+		expect(del).toHaveClass('opacity-60');
 	});
 
-	it('renders <mark> with review indicator', () => {
-		render(OcrMarkupRenderer, {
+	it('renders <mark> with notification dot indicator', () => {
+		const { container } = render(OcrMarkupRenderer, {
 			props: { text: 'The <mark>???</mark> dog', corrections: {} }
 		});
-		expect(screen.getByText('1')).toBeInTheDocument(); // Badge number
+		// Check for notification dot (unresolved indicator)
+		const dot = container.querySelector('.bg-amber-500.rounded-full');
+		expect(dot).toBeInTheDocument();
 	});
 
 	it('renders resolved <mark> with corrected value', () => {
@@ -34,12 +37,12 @@ describe('OcrMarkupRenderer', () => {
 		expect(screen.getByText('lazy')).toBeInTheDocument();
 	});
 
-	it('renders <u data-alt> with underline', () => {
+	it('renders <u data-alt> with suggestion displayed (not original)', () => {
 		render(OcrMarkupRenderer, {
 			props: { text: 'Go <u data-alt="their">there</u>', corrections: {} }
 		});
-		const u = screen.getByText('there');
-		expect(u.tagName).toBe('U');
+		// Now shows the suggestion inline, not the original
+		expect(screen.getByText('their')).toBeInTheDocument();
 	});
 
 	it('renders accepted <u data-alt> with suggestion', () => {

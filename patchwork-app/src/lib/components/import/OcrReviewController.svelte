@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import type { OcrCorrections, OcrCorrection } from '$lib/types/models';
 	import OcrMarkupRenderer from './OcrMarkupRenderer.svelte';
 	import OcrReviewWidget from './OcrReviewWidget.svelte';
@@ -15,12 +16,27 @@
 		corrections: OcrCorrections;
 		onCorrectionsChange: (corrections: OcrCorrections) => void;
 		onEditFullText?: () => void;
+		/** Callback with current unresolved count (for page-level banner) */
+		onUnresolvedCountChange?: (count: number) => void;
+		/** External trigger to start reviewing first item */
+		startReview?: boolean;
 	}
 
-	let { text, corrections, onCorrectionsChange, onEditFullText }: Props = $props();
+	let { text, corrections, onCorrectionsChange, onEditFullText, onUnresolvedCountChange, startReview = false }: Props = $props();
 
 	let activeItemId: string | null = $state(null);
 	let activeItemType: 'mark' | 'typo' | null = $state(null);
+	let containerRef: HTMLElement | null = $state(null);
+
+	// Scroll to the active review item when it changes
+	$effect(() => {
+		if (activeItemId && containerRef) {
+			const element = containerRef.querySelector(`[data-id="${activeItemId}"]`);
+			if (element && typeof element.scrollIntoView === 'function') {
+				element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			}
+		}
+	});
 
 	// Parse text to find all review items
 	function getReviewItems(html: string): ReviewItem[] {
@@ -55,6 +71,24 @@
 		reviewItems.filter((item) => !corrections[item.id]?.resolved)
 	);
 	let hasUnresolvedItems = $derived(unresolvedItems.length > 0);
+
+	// Report unresolved count to parent
+	// Use untrack to prevent the callback reference from being a dependency
+	$effect(() => {
+		const count = unresolvedItems.length;
+		untrack(() => {
+			onUnresolvedCountChange?.(count);
+		});
+	});
+
+	// Handle external start review trigger
+	$effect(() => {
+		if (startReview && unresolvedItems.length > 0 && !activeItemId) {
+			const firstItem = unresolvedItems[0];
+			activeItemId = firstItem.id;
+			activeItemType = firstItem.type;
+		}
+	});
 
 	let activeItem = $derived(
 		activeItemId ? reviewItems.find((i) => i.id === activeItemId) : null
@@ -97,18 +131,6 @@
 		}
 	}
 
-	function handleAcceptAll() {
-		const newCorrections = { ...corrections };
-
-		for (const item of unresolvedItems) {
-			if (item.type === 'typo' && item.suggestion) {
-				newCorrections[item.id] = { resolved: true, accepted: true };
-			}
-		}
-
-		onCorrectionsChange(newCorrections);
-	}
-
 	function navigateItems(direction: 'next' | 'prev') {
 		if (unresolvedItems.length === 0) return;
 
@@ -145,31 +167,12 @@
 			onEditFullText();
 		}
 	}
-
-	// Count unresolved typos for "Accept All" button
-	let unresolvedTypos = $derived(unresolvedItems.filter((i) => i.type === 'typo'));
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
 
-<div class="ocr-review-controller">
-	{#if hasUnresolvedItems}
-		<div class="flex items-center gap-2 mb-2 px-2 py-1 bg-amber-50 border border-amber-200 rounded text-sm">
-			<span class="text-amber-600 font-medium">
-				{unresolvedItems.length} item{unresolvedItems.length === 1 ? '' : 's'} need{unresolvedItems.length === 1 ? 's' : ''} attention
-			</span>
-			{#if unresolvedTypos.length > 0}
-				<button
-					class="ml-auto px-2 py-0.5 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded"
-					onclick={handleAcceptAll}
-				>
-					Accept All Suggestions ({unresolvedTypos.length})
-				</button>
-			{/if}
-		</div>
-	{/if}
-
-	<div class="relative font-mono text-sm whitespace-pre-wrap">
+<div class="ocr-review-controller" bind:this={containerRef}>
+	<div class="relative whitespace-pre-wrap">
 		<OcrMarkupRenderer
 			{text}
 			{corrections}

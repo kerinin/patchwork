@@ -65,13 +65,26 @@
 		if (!segment.id) return segment.content;
 
 		const correction = corrections[segment.id];
-		if (!correction?.resolved) return segment.content;
 
+		// For unresolved typos, show the suggestion (what we think it should be)
+		if (!correction?.resolved) {
+			if (segment.type === 'typo' && segment.suggestion) {
+				return segment.suggestion;
+			}
+			return segment.content;
+		}
+
+		// For resolved items, show the corrected value
 		if (segment.type === 'mark' && correction.value) {
 			return correction.value;
 		}
-		if (segment.type === 'typo' && correction.accepted && segment.suggestion) {
-			return segment.suggestion;
+		if (segment.type === 'typo') {
+			// If accepted with custom value, use that
+			if (correction.value) return correction.value;
+			// If accepted suggestion, show suggestion
+			if (correction.accepted && segment.suggestion) return segment.suggestion;
+			// If kept original, show original
+			return segment.content;
 		}
 		return segment.content;
 	}
@@ -87,50 +100,46 @@
 	);
 </script>
 
-<span class="ocr-markup">
+<span class="ocr-markup font-typewriter text-base leading-relaxed">
 	{#each segments as segment, i}
 		{#if segment.type === 'text'}
 			{segment.content}
 		{:else if segment.type === 'del'}
-			<del class="text-red-400 line-through opacity-60">{segment.content}</del>
+			<del class="line-through opacity-60">{segment.content}</del>
 		{:else if segment.type === 'mark'}
-			{#if isResolved(segment)}
-				<span class="bg-green-100 text-green-800 px-0.5 rounded">{getDisplayContent(segment)}</span>
-			{:else}
-				<span
-					class="relative inline-flex items-center cursor-pointer group"
-					role="button"
-					tabindex="0"
-					onclick={() => onReviewItem?.(segment.id!, 'mark')}
-					onkeydown={(e) => e.key === 'Enter' && onReviewItem?.(segment.id!, 'mark')}
-				>
-					<span class="absolute -top-3 -left-1 flex items-center justify-center w-4 h-4 text-[10px] font-bold bg-amber-500 text-white rounded-full">
-						{unresolvedMarks.findIndex((s) => s.id === segment.id) + 1}
-					</span>
-					<span class="bg-amber-100 text-amber-800 px-0.5 rounded border-2 border-amber-400 group-hover:border-amber-600">
-						{segment.content}
-					</span>
+			<!-- Mark: always amber background, clickable, dot indicator when unresolved -->
+			<span
+				class="review-item relative inline cursor-pointer group"
+				role="button"
+				tabindex="0"
+				data-id={segment.id}
+				onclick={() => onReviewItem?.(segment.id!, 'mark')}
+				onkeydown={(e) => e.key === 'Enter' && onReviewItem?.(segment.id!, 'mark')}
+			>
+				{#if !isResolved(segment)}
+					<span class="absolute -top-1.5 -right-1.5 w-3 h-3 bg-amber-500 rounded-full border-2 border-white shadow-sm"></span>
+				{/if}
+				<span class="bg-amber-200 px-1.5 py-0.5 rounded hover:bg-amber-300 transition-colors">
+					{getDisplayContent(segment)}
 				</span>
-			{/if}
+			</span>
 		{:else if segment.type === 'typo'}
-			{#if isResolved(segment)}
-				<span class="bg-blue-50 text-blue-800 px-0.5 rounded">{getDisplayContent(segment)}</span>
-			{:else}
-				<span
-					class="relative inline cursor-pointer group"
-					role="button"
-					tabindex="0"
-					onclick={() => onReviewItem?.(segment.id!, 'typo')}
-					onkeydown={(e) => e.key === 'Enter' && onReviewItem?.(segment.id!, 'typo')}
-				>
-					<u class="decoration-amber-400 decoration-wavy underline-offset-2 group-hover:bg-amber-50">
-						{segment.content}
-					</u>
-					{#if segment.suggestion}
-						<span class="text-[10px] text-amber-600 ml-0.5">{segment.suggestion}</span>
-					{/if}
+			<!-- Typo: always orange background, clickable, dot indicator when unresolved -->
+			<span
+				class="review-item relative inline cursor-pointer group"
+				role="button"
+				tabindex="0"
+				data-id={segment.id}
+				onclick={() => onReviewItem?.(segment.id!, 'typo')}
+				onkeydown={(e) => e.key === 'Enter' && onReviewItem?.(segment.id!, 'typo')}
+			>
+				{#if !isResolved(segment)}
+					<span class="absolute -top-1.5 -right-1.5 w-3 h-3 bg-orange-500 rounded-full border-2 border-white shadow-sm"></span>
+				{/if}
+				<span class="bg-orange-100 px-1.5 py-0.5 rounded hover:bg-orange-200 transition-colors">
+					{getDisplayContent(segment)}
 				</span>
-			{/if}
+			</span>
 		{/if}
 	{/each}
 </span>
