@@ -10,6 +10,8 @@ export {
 	needsReview,
 	getLowConfidenceWords,
 	terminateOcr,
-	CONFIDENCE_THRESHOLD
+	CONFIDENCE_THRESHOLD,
+	isOcrFailedText,
+	getOcrFailedReason
 } from './core';
 export type { OcrConfig } from './core';

@@ -55,6 +55,8 @@
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.key === 'Enter') {
 			e.preventDefault();
+			// Don't accept if input is empty for marks
+			if (type === 'mark' && !inputValue.trim()) return;
 			handleAccept();
 		} else if (e.key === 'Escape') {
 			e.preventDefault();
@@ -102,8 +104,9 @@
 		/>
 		<div class="flex justify-end mt-2">
 			<button
-				class="px-3 py-1 text-xs bg-amber-500 hover:bg-amber-600 text-white rounded font-medium"
+				class="px-3 py-1 text-xs bg-amber-500 hover:bg-amber-600 text-white rounded font-medium disabled:opacity-50 disabled:cursor-not-allowed"
 				onclick={handleAccept}
+				disabled={!inputValue.trim()}
 			>
 				Accept <kbd class="ml-1 px-1 py-0.5 bg-amber-600 rounded text-[10px]">↵</kbd>
 			</button>

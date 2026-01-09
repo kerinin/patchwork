@@ -420,3 +420,131 @@ test.describe('Review Modal Visibility', () => {
 		await expect(page.locator('[role="dialog"]')).toBeVisible();
 	});
 });
+
+test.describe('Review Modal Empty Text', () => {
+	let testPatchId: string;
+
+	test.beforeEach(async () => {
+		// Create a patch with a mark tag to review
+		const supabase = getSupabaseAdmin();
+		await supabase.auth.signInWithPassword({
+			email: 'dev@patchwork.local',
+			password: 'devpassword123'
+		});
+
+		const { data } = await supabase
+			.from('patches')
+			.insert({
+				user_id: DEV_USER_ID,
+				status: 'needs_review',
+				image_path: `${DEV_USER_ID}/test_empty_text.png`,
+				original_filename: 'test_empty_text.png',
+				extracted_text: 'The word <mark>unclear</mark> needs review.',
+				confidence_data: { overall: 0.8 }
+			})
+			.select()
+			.single();
+
+		testPatchId = data!.id;
+	});
+
+	test.afterEach(async () => {
+		const supabase = getSupabaseAdmin();
+		await supabase.auth.signInWithPassword({
+			email: 'dev@patchwork.local',
+			password: 'devpassword123'
+		});
+		await supabase.from('patches').delete().eq('id', testPatchId);
+	});
+
+	test('should not allow saving empty text in review modal', async ({ page }) => {
+		await page.goto('/import');
+		await page.waitForLoadState('networkidle');
+
+		// Click on the mark item to open review modal
+		await page.locator('.review-item').first().click();
+
+		// Should see the review dialog
+		await expect(page.locator('[role="dialog"]')).toBeVisible();
+
+		// Clear the input field
+		const input = page.locator('[role="dialog"] input');
+		await input.clear();
+
+		// Accept button should be disabled when input is empty
+		const acceptButton = page.locator('[role="dialog"] button:has-text("Accept")');
+		await expect(acceptButton).toBeDisabled();
+	});
+});
+
+test.describe('OCR Failed Needs Review', () => {
+	let testPatchId: string;
+
+	test.beforeEach(async () => {
+		// Create an OCR-failed patch
+		const supabase = getSupabaseAdmin();
+		await supabase.auth.signInWithPassword({
+			email: 'dev@patchwork.local',
+			password: 'devpassword123'
+		});
+
+		const { data } = await supabase
+			.from('patches')
+			.insert({
+				user_id: DEV_USER_ID,
+				status: 'needs_review',
+				image_path: `${DEV_USER_ID}/test_ocr_failed_review.png`,
+				original_filename: 'test_ocr_failed_review.png',
+				extracted_text: '<!-- OCR_FAILED: Could not read handwriting -->',
+				confidence_data: { overall: 0 }
+			})
+			.select()
+			.single();
+
+		testPatchId = data!.id;
+	});
+
+	test.afterEach(async () => {
+		const supabase = getSupabaseAdmin();
+		await supabase.auth.signInWithPassword({
+			email: 'dev@patchwork.local',
+			password: 'devpassword123'
+		});
+		await supabase.from('patches').delete().eq('id', testPatchId);
+	});
+
+	test('OCR failed patches should show in attention banner count', async ({ page }) => {
+		await page.goto('/import');
+		await page.waitForLoadState('networkidle');
+
+		// OCR failed patch should contribute to "needs attention" count
+		await expect(page.locator('text=/\\d+ items? needs? attention/')).toBeVisible({ timeout: 10000 });
+	});
+
+	test('saving manual text on OCR failed patch should update status badge to ready', async ({ page }) => {
+		await page.goto('/import');
+		await page.waitForLoadState('networkidle');
+
+		// Find the OCR Failed card
+		await expect(page.locator('text=OCR Failed').first()).toBeVisible({ timeout: 10000 });
+
+		// Click Type Content
+		await page.locator('button:has-text("Type Content")').first().click();
+
+		// Enter some text
+		const textarea = page.locator('textarea[placeholder*="document content"]');
+		await textarea.fill('This is my manually typed content');
+
+		// Save
+		await page.locator('button:has-text("Save Content")').click();
+
+		// Wait for save to complete
+		await expect(textarea).not.toBeVisible({ timeout: 5000 });
+
+		// The status badge should now show "ready" (green), not "needs review" (yellow)
+		const patchCard = page.locator('.border.border-paper-dark').first();
+		const statusBadge = patchCard.locator('.text-xs.font-medium').first();
+		await expect(statusBadge).toContainText('ready');
+		await expect(statusBadge).toHaveClass(/bg-green/);
+	});
+});

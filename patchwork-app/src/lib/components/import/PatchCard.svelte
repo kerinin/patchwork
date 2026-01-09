@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { storage, patches as patchesApi } from '$lib/services/supabase';
+	import { isOcrFailedText, getOcrFailedReason } from '$lib/services/ocr';
 	import type { Patch, OcrCorrections } from '$lib/types/models';
 	import OcrReviewController from './OcrReviewController.svelte';
 
@@ -27,13 +28,12 @@
 
 	// Local extracted text - allows updating after manual entry without prop change
 	let localExtractedText = $state(patch.extracted_text);
+	// Local status - allows updating after manual entry without prop change
+	let localStatus = $state(patch.status);
 
-	// Check if OCR failed for this patch
-	let isOcrFailed = $derived(/<!--\s*OCR_FAILED/.test(localExtractedText));
-	let ocrFailReason = $derived(() => {
-		const match = localExtractedText.match(/<!--\s*OCR_FAILED:\s*(.+?)\s*-->/);
-		return match?.[1] || 'Unknown reason';
-	});
+	// Check if OCR failed for this patch (uses shared utility)
+	let isOcrFailed = $derived(isOcrFailedText(localExtractedText));
+	let ocrFailReason = $derived(() => getOcrFailedReason(localExtractedText));
 
 	// Manage collapsed state
 	$effect(() => {
@@ -74,6 +74,17 @@
 		onUnresolvedCountChange?.(patch.id, count);
 	}
 
+	// OCR failed patches count as 1 unresolved item (need manual text entry)
+	// Use untrack to prevent callback reference from being a dependency
+	$effect(() => {
+		const failed = isOcrFailed;
+		untrack(() => {
+			if (failed) {
+				onUnresolvedCountChange?.(patch.id, 1);
+			}
+		});
+	});
+
 	function getFirstLine(text: string): string {
 		// Strip HTML tags for preview
 		const plainText = text.replace(/<[^>]+>/g, '');
@@ -101,9 +112,12 @@
 				extracted_text: manualText,
 				status: 'ready'
 			});
-			// Update local state so UI reflects the new content
+			// Update local state so UI reflects the new content and status
 			localExtractedText = manualText;
+			localStatus = 'ready';
 			isTypingContent = false;
+			// Report 0 unresolved since manual text was entered
+			onUnresolvedCountChange?.(patch.id, 0);
 			// Trigger a refresh by calling corrections change
 			onCorrectionsChange?.(patch.id, {});
 		} catch (e) {
@@ -150,8 +164,8 @@
 <div class="rounded-lg border border-paper-dark bg-white shadow-sm overflow-hidden" class:collapsed={isCollapsed}>
 	<!-- Header with status and expand/collapse -->
 	<div class="flex items-center gap-2 px-4 py-2 border-b border-paper-dark bg-paper/50">
-		<span class="rounded border px-2 py-0.5 text-xs font-medium {statusStyles[patch.status] || 'bg-gray-100 text-gray-700 border-gray-200'}">
-			{formatStatus(patch.status)}
+		<span class="rounded border px-2 py-0.5 text-xs font-medium {statusStyles[localStatus] || 'bg-gray-100 text-gray-700 border-gray-200'}">
+			{formatStatus(localStatus)}
 		</span>
 		{#if isCollapsed}
 			<span class="flex-1 text-sm text-ink-light font-typewriter truncate">

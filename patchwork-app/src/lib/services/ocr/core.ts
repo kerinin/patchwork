@@ -27,6 +27,28 @@ export interface OcrConfig {
 export const CONFIDENCE_THRESHOLD = 85;
 
 /**
+ * Pattern for detecting OCR_FAILED marker in text.
+ */
+const OCR_FAILED_PATTERN = /<!--\s*OCR_FAILED/;
+const OCR_FAILED_REASON_PATTERN = /<!--\s*OCR_FAILED:\s*(.+?)\s*-->/;
+
+/**
+ * Check if OCR text indicates a failure (OCR_FAILED marker).
+ */
+export function isOcrFailedText(text: string): boolean {
+	return OCR_FAILED_PATTERN.test(text);
+}
+
+/**
+ * Extract the failure reason from OCR_FAILED text.
+ * Returns 'Unknown reason' if no reason is found.
+ */
+export function getOcrFailedReason(text: string): string {
+	const match = text.match(OCR_FAILED_REASON_PATTERN);
+	return match?.[1] || 'Unknown reason';
+}
+
+/**
  * Convert a File/Blob to base64 string
  */
 async function fileToBase64(file: File | Blob): Promise<string> {
@@ -134,7 +156,7 @@ export function needsReview(result: OcrResult): boolean {
 		result.needs_review ||
 		result.text.length < 10 ||
 		/<mark[^>]*>/.test(result.text) ||
-		/<!--\s*OCR_FAILED/.test(result.text)
+		isOcrFailedText(result.text)
 	);
 }
 
