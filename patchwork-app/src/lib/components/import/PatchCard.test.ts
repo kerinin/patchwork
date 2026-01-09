@@ -160,6 +160,199 @@ describe('PatchCard', () => {
 		});
 	});
 
+	describe('acceptAll prop', () => {
+		it('should resolve all items even when card is FORCED collapsed', async () => {
+			const { default: PatchCard } = await import('./PatchCard.svelte');
+
+			// Patch with unresolved items
+			const patchWithItems = {
+				...mockPatch,
+				status: 'needs_review' as const,
+				extracted_text: 'Hello <mark>unclear</mark> world <mark>fuzzy</mark>',
+				ocr_corrections: {}
+			};
+
+			const { rerender } = render(PatchCard, {
+				props: {
+					patch: patchWithItems,
+					onCorrectionsChange: mockOnCorrectionsChange,
+					onUnresolvedCountChange: mockOnUnresolvedCountChange,
+					acceptAll: false,
+					collapsed: true // FORCE collapsed - this is the bug scenario
+				}
+			});
+
+			// Wait for component to settle
+			await waitFor(() => {
+				// Card should be collapsed (expand button visible)
+				expect(screen.getByLabelText('Expand')).toBeInTheDocument();
+			});
+
+			mockOnCorrectionsChange.mockClear();
+
+			// Trigger acceptAll while card is collapsed - this SHOULD still work
+			await rerender({
+				patch: patchWithItems,
+				onCorrectionsChange: mockOnCorrectionsChange,
+				onUnresolvedCountChange: mockOnUnresolvedCountChange,
+				acceptAll: true,
+				collapsed: true // Keep collapsed
+			});
+
+			// Should have called onCorrectionsChange with all items resolved
+			await waitFor(() => {
+				expect(mockOnCorrectionsChange).toHaveBeenCalledWith(
+					'patch-1',
+					expect.objectContaining({
+						'mark-0': expect.objectContaining({ resolved: true }),
+						'mark-1': expect.objectContaining({ resolved: true })
+					})
+				);
+			});
+
+			// Should also report 0 unresolved items to parent
+			await waitFor(() => {
+				expect(mockOnUnresolvedCountChange).toHaveBeenCalledWith('patch-1', 0);
+			});
+		});
+
+		it('should mark needs_review patches WITHOUT mark tags as ready when acceptAll', async () => {
+			const { default: PatchCard } = await import('./PatchCard.svelte');
+
+			// Patch with needs_review status but NO mark/u tags
+			const patchNoMarks = {
+				...mockPatch,
+				status: 'needs_review' as const,
+				extracted_text: 'Plain text without any marks or underlines',
+				ocr_corrections: {}
+			};
+
+			const { rerender } = render(PatchCard, {
+				props: {
+					patch: patchNoMarks,
+					onCorrectionsChange: mockOnCorrectionsChange,
+					onUnresolvedCountChange: mockOnUnresolvedCountChange,
+					acceptAll: false
+				}
+			});
+
+			// Initially should report 1 unresolved (needs_review without marks)
+			await waitFor(() => {
+				expect(mockOnUnresolvedCountChange).toHaveBeenCalledWith('patch-1', 1);
+			});
+
+			mockOnUnresolvedCountChange.mockClear();
+
+			// Trigger acceptAll
+			await rerender({
+				patch: patchNoMarks,
+				onCorrectionsChange: mockOnCorrectionsChange,
+				onUnresolvedCountChange: mockOnUnresolvedCountChange,
+				acceptAll: true
+			});
+
+			// Should report 0 unresolved and status should change to ready
+			await waitFor(() => {
+				expect(mockOnUnresolvedCountChange).toHaveBeenCalledWith('patch-1', 0);
+			});
+
+			// Status badge should show 'ready'
+			await waitFor(() => {
+				expect(screen.getByText('ready')).toBeInTheDocument();
+			});
+		});
+
+		it('should DELETE OCR_FAILED patches when acceptAll is triggered', async () => {
+			const { default: PatchCard } = await import('./PatchCard.svelte');
+			const mockOnDelete = vi.fn();
+
+			// Patch with OCR_FAILED
+			const ocrFailedPatch = {
+				...mockPatch,
+				status: 'needs_review' as const,
+				extracted_text: '<!-- OCR_FAILED: Could not read handwriting -->',
+				ocr_corrections: {}
+			};
+
+			const { rerender } = render(PatchCard, {
+				props: {
+					patch: ocrFailedPatch,
+					onCorrectionsChange: mockOnCorrectionsChange,
+					onUnresolvedCountChange: mockOnUnresolvedCountChange,
+					onDelete: mockOnDelete,
+					acceptAll: false
+				}
+			});
+
+			// Initially should report 1 unresolved (OCR failed needs attention)
+			await waitFor(() => {
+				expect(mockOnUnresolvedCountChange).toHaveBeenCalledWith('patch-1', 1);
+			});
+
+			mockDelete.mockClear();
+			mockOnDelete.mockClear();
+
+			// Trigger acceptAll
+			await rerender({
+				patch: ocrFailedPatch,
+				onCorrectionsChange: mockOnCorrectionsChange,
+				onUnresolvedCountChange: mockOnUnresolvedCountChange,
+				onDelete: mockOnDelete,
+				acceptAll: true
+			});
+
+			// Should delete the OCR_FAILED patch
+			await waitFor(() => {
+				expect(mockDelete).toHaveBeenCalledWith('patch-1');
+			});
+
+			// Should notify parent of deletion
+			await waitFor(() => {
+				expect(mockOnDelete).toHaveBeenCalledWith('patch-1');
+			});
+		});
+	});
+
+	describe('status update after all resolved', () => {
+		it('should update status badge to ready after all corrections are resolved', async () => {
+			const user = userEvent.setup();
+			const { default: PatchCard } = await import('./PatchCard.svelte');
+
+			// Patch with one unresolved item
+			const patchWithItem = {
+				...mockPatch,
+				status: 'needs_review' as const,
+				extracted_text: 'Hello <mark>unclear</mark> world',
+				ocr_corrections: {}
+			};
+
+			render(PatchCard, {
+				props: {
+					patch: patchWithItem,
+					onCorrectionsChange: mockOnCorrectionsChange
+				}
+			});
+
+			// Initially shows needs_review
+			expect(screen.getByText('needs review')).toBeInTheDocument();
+
+			// Click on the mark to open review widget
+			const markElement = screen.getByText('unclear').closest('[role="button"]');
+			await user.click(markElement!);
+
+			// Type a correction and accept
+			const input = screen.getByPlaceholderText(/enter correct text/i);
+			await user.type(input, 'fixed text');
+			await user.keyboard('{Enter}');
+
+			// Status badge should now say 'ready', not 'needs review'
+			await waitFor(() => {
+				expect(screen.getByText('ready')).toBeInTheDocument();
+				expect(screen.queryByText('needs review')).not.toBeInTheDocument();
+			});
+		});
+	});
+
 	describe('OCR failed patches', () => {
 		const ocrFailedPatch = {
 			...mockPatch,

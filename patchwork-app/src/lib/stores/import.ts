@@ -178,6 +178,7 @@ export function clearCompleted(): void {
 /**
  * Process the queue - starts processing pending items.
  * Runs items in parallel with concurrency limit.
+ * Continues processing until no pending items remain (including newly added ones).
  */
 export async function processQueue(concurrency = 3): Promise<void> {
 	if (!browser) return;
@@ -188,11 +189,15 @@ export async function processQueue(concurrency = 3): Promise<void> {
 	importState.setProcessing(true);
 
 	try {
-		const pending = state.queue.filter((item) => item.status === 'pending');
+		// Keep processing while there are pending items (including newly added ones)
+		while (true) {
+			const currentState = get(importState);
+			const pending = currentState.queue.filter((item) => item.status === 'pending');
 
-		// Process in batches
-		for (let i = 0; i < pending.length; i += concurrency) {
-			const batch = pending.slice(i, i + concurrency);
+			if (pending.length === 0) break;
+
+			// Process current batch
+			const batch = pending.slice(0, concurrency);
 			await Promise.all(batch.map((item) => processItem(item)));
 		}
 	} finally {

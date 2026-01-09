@@ -180,6 +180,57 @@ test.describe('Import Flow E2E', () => {
 		// Verify page loaded without crashing
 		await expect(page.locator('h2:has-text("Import")')).toBeVisible();
 	});
+
+	test('should handle sequential file uploads (drop, wait 500ms, drop another)', async ({ page }) => {
+		await page.goto('/import');
+		await page.waitForLoadState('networkidle');
+
+		// Wait for page to be ready
+		await expect(page.locator('text=Loading patches')).not.toBeVisible({ timeout: 10000 });
+
+		// Get initial patch count
+		const supabase = getSupabaseAdmin();
+		await supabase.auth.signInWithPassword({
+			email: 'dev@patchwork.local',
+			password: 'devpassword123'
+		});
+		const { data: initialPatches } = await supabase.from('patches').select('id').eq('user_id', DEV_USER_ID);
+		const initialCount = initialPatches?.length || 0;
+
+		const fileInput = page.locator('#file-input');
+
+		// Upload first file
+		await fileInput.setInputFiles('e2e/fixtures/test-image.png');
+
+		// Wait 500ms (simulating user dropping files sequentially)
+		await page.waitForTimeout(500);
+
+		// Upload second file
+		await fileInput.setInputFiles('e2e/fixtures/test-image.png');
+
+		// Wait for all processing to complete
+		await expect(page.locator('text=Processing')).not.toBeVisible({ timeout: 120000 });
+
+		// Verify TWO new patches were created (not just one)
+		const { data: finalPatches } = await supabase
+			.from('patches')
+			.select('id, image_path')
+			.eq('user_id', DEV_USER_ID);
+
+		const finalCount = finalPatches?.length || 0;
+		expect(finalCount).toBeGreaterThanOrEqual(initialCount + 2);
+
+		// Track new patches for cleanup
+		if (finalPatches) {
+			const newPatches = finalPatches.filter((p) => !initialPatches?.find((ip) => ip.id === p.id));
+			for (const patch of newPatches) {
+				createdPatchIds.push(patch.id);
+				if (patch.image_path) {
+					uploadedPaths.push(patch.image_path);
+				}
+			}
+		}
+	});
 });
 
 test.describe('Prerequisites Check', () => {
@@ -457,7 +508,7 @@ test.describe('Review Modal Empty Text', () => {
 		await supabase.from('patches').delete().eq('id', testPatchId);
 	});
 
-	test('should not allow saving empty text in review modal', async ({ page }) => {
+	test('should allow accepting empty text in review modal (to delete content)', async ({ page }) => {
 		await page.goto('/import');
 		await page.waitForLoadState('networkidle');
 
@@ -471,9 +522,15 @@ test.describe('Review Modal Empty Text', () => {
 		const input = page.locator('[role="dialog"] input');
 		await input.clear();
 
-		// Accept button should be disabled when input is empty
+		// Accept button should be enabled even when input is empty
 		const acceptButton = page.locator('[role="dialog"] button:has-text("Accept")');
-		await expect(acceptButton).toBeDisabled();
+		await expect(acceptButton).toBeEnabled();
+
+		// Clicking accept should work and close the dialog
+		await acceptButton.click();
+
+		// Dialog should close after accepting
+		await expect(page.locator('[role="dialog"]')).not.toBeVisible({ timeout: 5000 });
 	});
 });
 
@@ -546,5 +603,226 @@ test.describe('OCR Failed Needs Review', () => {
 		const statusBadge = patchCard.locator('.text-xs.font-medium').first();
 		await expect(statusBadge).toContainText('ready');
 		await expect(statusBadge).toHaveClass(/bg-green/);
+	});
+});
+
+test.describe('Accept All Button', () => {
+	let testPatchIds: string[] = [];
+
+	test.beforeEach(async () => {
+		const supabase = getSupabaseAdmin();
+		await supabase.auth.signInWithPassword({
+			email: 'dev@patchwork.local',
+			password: 'devpassword123'
+		});
+
+		// Clean up ALL patches first to ensure test isolation
+		await supabase.from('patches').delete().eq('user_id', DEV_USER_ID);
+
+		// Create first patch with marks
+		const { data: patch1 } = await supabase
+			.from('patches')
+			.insert({
+				user_id: DEV_USER_ID,
+				status: 'needs_review',
+				image_path: `${DEV_USER_ID}/test_accept_all_1.png`,
+				original_filename: 'test_accept_all_1.png',
+				extracted_text: 'The word <mark>unclear1</mark> needs review.',
+				confidence_data: { overall: 0.8 }
+			})
+			.select()
+			.single();
+
+		// Create second patch with marks
+		const { data: patch2 } = await supabase
+			.from('patches')
+			.insert({
+				user_id: DEV_USER_ID,
+				status: 'needs_review',
+				image_path: `${DEV_USER_ID}/test_accept_all_2.png`,
+				original_filename: 'test_accept_all_2.png',
+				extracted_text: 'Another <mark>unclear2</mark> word here.',
+				confidence_data: { overall: 0.8 }
+			})
+			.select()
+			.single();
+
+		testPatchIds = [patch1!.id, patch2!.id];
+	});
+
+	test.afterEach(async () => {
+		const supabase = getSupabaseAdmin();
+		await supabase.auth.signInWithPassword({
+			email: 'dev@patchwork.local',
+			password: 'devpassword123'
+		});
+		await supabase.from('patches').delete().in('id', testPatchIds);
+	});
+
+	test('Accept All should resolve all pending review items', async ({ page }) => {
+		await page.goto('/import');
+		await page.waitForLoadState('networkidle');
+
+		// Should see attention banner with our test items
+		await expect(page.locator('text=/\\d+ items? needs? attention/')).toBeVisible({ timeout: 10000 });
+
+		// Get initial count - should be exactly 2 from our test patches (each has 1 mark)
+		const bannerText = await page.locator('text=/\\d+ items? needs? attention/').textContent();
+		const initialCount = parseInt(bannerText?.match(/(\d+)/)?.[1] || '0');
+		expect(initialCount).toBeGreaterThanOrEqual(2);
+
+		// Click Accept All
+		await page.locator('button:has-text("Accept All")').click();
+
+		// Banner MUST disappear - all test patches should be resolved
+		await expect(page.locator('text=/\\d+ items? needs? attention/')).not.toBeVisible({ timeout: 10000 });
+
+		// Verify our test patches show 'ready' status
+		const patchCards = page.locator('.border.border-paper-dark');
+		const readyBadges = await patchCards.locator('.bg-green-100:has-text("ready")').count();
+		expect(readyBadges).toBeGreaterThanOrEqual(2);
+	});
+
+	test('Accept All should DELETE OCR_FAILED patches', async ({ page }) => {
+		const supabase = getSupabaseAdmin();
+		await supabase.auth.signInWithPassword({
+			email: 'dev@patchwork.local',
+			password: 'devpassword123'
+		});
+
+		// Create an OCR_FAILED patch
+		const { data: ocrFailedPatch } = await supabase
+			.from('patches')
+			.insert({
+				user_id: DEV_USER_ID,
+				status: 'needs_review',
+				image_path: `${DEV_USER_ID}/test_ocr_failed.png`,
+				original_filename: 'test_ocr_failed.png',
+				extracted_text: '<!-- OCR_FAILED: Could not read handwriting -->',
+				confidence_data: { overall: 0.5 }
+			})
+			.select()
+			.single();
+
+		const ocrFailedPatchId = ocrFailedPatch!.id;
+
+		await page.goto('/import');
+		await page.waitForLoadState('networkidle');
+
+		// Should see OCR Failed in attention banner
+		await expect(page.locator('text=/\\d+ items? needs? attention/')).toBeVisible({ timeout: 10000 });
+
+		// Click Accept All
+		await page.locator('button:has-text("Accept All")').click();
+
+		// Banner should disappear (OCR_FAILED patch was deleted)
+		await expect(page.locator('text=/\\d+ items? needs? attention/')).not.toBeVisible({ timeout: 10000 });
+
+		// Verify the patch was actually deleted from database (wait for async delete)
+		await expect(async () => {
+			const { data: remainingPatch } = await supabase
+				.from('patches')
+				.select('id')
+				.eq('id', ocrFailedPatchId)
+				.single();
+
+			expect(remainingPatch).toBeNull();
+		}).toPass({ timeout: 5000 });
+	});
+});
+
+test.describe('DB Patches Needs Review Banner', () => {
+	let testPatchId: string;
+
+	test.beforeEach(async () => {
+		// Create a patch with needs_review status but NO mark tags (simulating DB-loaded state)
+		const supabase = getSupabaseAdmin();
+		await supabase.auth.signInWithPassword({
+			email: 'dev@patchwork.local',
+			password: 'devpassword123'
+		});
+
+		const { data } = await supabase
+			.from('patches')
+			.insert({
+				user_id: DEV_USER_ID,
+				status: 'needs_review',
+				image_path: `${DEV_USER_ID}/test_db_review.png`,
+				original_filename: 'test_db_review.png',
+				extracted_text: 'This text has no mark tags but status is needs_review',
+				confidence_data: { overall: 0.5 }
+			})
+			.select()
+			.single();
+
+		testPatchId = data!.id;
+	});
+
+	test.afterEach(async () => {
+		const supabase = getSupabaseAdmin();
+		await supabase.auth.signInWithPassword({
+			email: 'dev@patchwork.local',
+			password: 'devpassword123'
+		});
+		await supabase.from('patches').delete().eq('id', testPatchId);
+	});
+
+	test('patches with needs_review status from DB should show in attention banner', async ({ page }) => {
+		await page.goto('/import');
+		await page.waitForLoadState('networkidle');
+
+		// Patch loaded from DB with needs_review status should contribute to attention count
+		await expect(page.locator('text=/\\d+ items? needs? attention/')).toBeVisible({ timeout: 10000 });
+	});
+});
+
+test.describe('OCR Status with Mark Tags', () => {
+	let testPatchId: string;
+
+	test.beforeEach(async () => {
+		// Create a patch with mark tags that should show as needs_review
+		const supabase = getSupabaseAdmin();
+		await supabase.auth.signInWithPassword({
+			email: 'dev@patchwork.local',
+			password: 'devpassword123'
+		});
+
+		const { data } = await supabase
+			.from('patches')
+			.insert({
+				user_id: DEV_USER_ID,
+				status: 'needs_review', // Correct status for having mark tags
+				image_path: `${DEV_USER_ID}/test_mark_status.png`,
+				original_filename: 'test_mark_status.png',
+				extracted_text: 'Text with <mark>unclear</mark> content that needs review.',
+				confidence_data: { overall: 0.8 }
+			})
+			.select()
+			.single();
+
+		testPatchId = data!.id;
+	});
+
+	test.afterEach(async () => {
+		const supabase = getSupabaseAdmin();
+		await supabase.auth.signInWithPassword({
+			email: 'dev@patchwork.local',
+			password: 'devpassword123'
+		});
+		await supabase.from('patches').delete().eq('id', testPatchId);
+	});
+
+	test('patch with mark tags should show needs_review status, not ready', async ({ page }) => {
+		await page.goto('/import');
+		await page.waitForLoadState('networkidle');
+
+		// Find the patch card
+		const patchCard = page.locator('.border.border-paper-dark').first();
+		await expect(patchCard).toBeVisible({ timeout: 10000 });
+
+		// Status badge should show "needs review" (yellow), not "ready" (green)
+		const statusBadge = patchCard.locator('.text-xs.font-medium').first();
+		await expect(statusBadge).toContainText('needs review');
+		await expect(statusBadge).toHaveClass(/bg-yellow/);
 	});
 });

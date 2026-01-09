@@ -14,11 +14,15 @@
 		onDelete?: (patchId: string) => void;
 		/** External trigger to start review */
 		startReview?: boolean;
+		/** External trigger to accept all items */
+		acceptAll?: boolean;
 		/** Force collapsed state */
 		collapsed?: boolean;
 	}
 
-	let { patch, onCorrectionsChange, onUnresolvedCountChange, onDelete, startReview = false, collapsed: forcedCollapse }: Props = $props();
+	// Keep props object to access startReview and acceptAll reactively
+	const props = $props<Props>();
+	const { patch, onCorrectionsChange, onUnresolvedCountChange, onDelete, collapsed: forcedCollapse } = props;
 
 	// Local corrections state, initialized from patch
 	let corrections: OcrCorrections = $state(patch.ocr_corrections ?? {});
@@ -39,6 +43,9 @@
 	$effect(() => {
 		if (forcedCollapse !== undefined) {
 			isCollapsed = forcedCollapse;
+		} else if (props.startReview) {
+			// Expand when start review is triggered
+			isCollapsed = false;
 		} else if (isOcrFailed) {
 			// Never collapse failed OCR - needs attention
 			isCollapsed = false;
@@ -72,17 +79,118 @@
 	function handleUnresolvedCountChange(count: number) {
 		unresolvedCount = count;
 		onUnresolvedCountChange?.(patch.id, count);
+
+		// Update status to 'ready' when all items are resolved
+		// BUT only if there ARE reviewable items - patches with needs_review
+		// but no mark/u tags should stay needs_review until Accept All
+		const hasItems = hasReviewableItems();
+		if (count === 0 && localStatus === 'needs_review' && !isOcrFailed && hasItems) {
+			localStatus = 'ready';
+			// Persist to database
+			patchesApi.update(patch.id, { status: 'ready' }).catch((e) => {
+				console.error('Failed to update patch status:', e);
+			});
+		}
 	}
 
-	// OCR failed patches count as 1 unresolved item (need manual text entry)
+	// Report unresolved count for patches that need attention but aren't handled by OcrReviewController
+	// This includes: OCR_FAILED patches, and patches with needs_review status but no mark/u tags
 	// Use untrack to prevent callback reference from being a dependency
 	$effect(() => {
 		const failed = isOcrFailed;
+		const hasMarkTags = hasReviewableItems();
+		const needsReviewStatus = localStatus === 'needs_review';
+
 		untrack(() => {
 			if (failed) {
+				// OCR_FAILED patches count as 1 unresolved item (need manual text entry)
+				onUnresolvedCountChange?.(patch.id, 1);
+			} else if (needsReviewStatus && !hasMarkTags) {
+				// Patches with needs_review status but no reviewable items
+				// (e.g., low confidence OCR without specific issues)
 				onUnresolvedCountChange?.(patch.id, 1);
 			}
 		});
+	});
+
+	// Parse text to find all reviewable items (same logic as OcrReviewController)
+	function getReviewItems(html: string): { id: string; type: 'mark' | 'typo'; content: string; suggestion?: string }[] {
+		const items: { id: string; type: 'mark' | 'typo'; content: string; suggestion?: string }[] = [];
+		let markCount = 0;
+		let typoCount = 0;
+
+		const tagRegex = /<(mark|u)([^>]*)>(.*?)<\/\1>/g;
+		let match;
+
+		while ((match = tagRegex.exec(html)) !== null) {
+			const [, tag, attrs, content] = match;
+
+			if (tag === 'mark') {
+				items.push({ id: `mark-${markCount++}`, type: 'mark', content });
+			} else if (tag === 'u') {
+				const altMatch = attrs.match(/data-alt="([^"]*)"/);
+				items.push({
+					id: `typo-${typoCount++}`,
+					type: 'typo',
+					content,
+					suggestion: altMatch?.[1]
+				});
+			}
+		}
+
+		return items;
+	}
+
+	// Handle acceptAll at PatchCard level so it works even when collapsed
+	// (OcrReviewController is only rendered when expanded)
+	$effect(() => {
+		if (props.acceptAll) {
+			if (isOcrFailed) {
+				// Case 0: OCR_FAILED patches - delete them (default action for failed OCR)
+				patchesApi.delete(patch.id).catch((e) => {
+					console.error('Failed to delete OCR_FAILED patch:', e);
+				});
+				untrack(() => {
+					onDelete?.(patch.id);
+				});
+			} else {
+				const items = getReviewItems(localExtractedText);
+				const unresolvedItems = items.filter((item) => !corrections[item.id]?.resolved);
+
+				if (unresolvedItems.length > 0) {
+					// Case 1: Has unresolved mark/u tags - resolve them
+					const newCorrections = { ...corrections };
+					for (const item of unresolvedItems) {
+						if (item.type === 'mark') {
+							// For marks, accept with original content (keeps as-is)
+							newCorrections[item.id] = { resolved: true, value: item.content };
+						} else {
+							// For typos, accept the suggestion
+							newCorrections[item.id] = { resolved: true, accepted: true };
+						}
+					}
+					corrections = newCorrections;
+					// Update status to ready since all items are now resolved
+					localStatus = 'ready';
+					patchesApi.update(patch.id, { status: 'ready' }).catch((e) => {
+						console.error('Failed to update patch status:', e);
+					});
+					untrack(() => {
+						onCorrectionsChange?.(patch.id, newCorrections);
+						onUnresolvedCountChange?.(patch.id, 0);
+					});
+				} else if (localStatus === 'needs_review' && items.length === 0) {
+					// Case 2: No mark/u tags but needs_review status - just mark as ready
+					localStatus = 'ready';
+					patchesApi.update(patch.id, { status: 'ready' }).catch((e) => {
+						console.error('Failed to update patch status:', e);
+					});
+					untrack(() => {
+						onUnresolvedCountChange?.(patch.id, 0);
+					});
+				}
+			}
+		}
 	});
 
 	function getFirstLine(text: string): string {
@@ -293,7 +401,8 @@
 							{corrections}
 							onCorrectionsChange={handleCorrectionsChange}
 							onUnresolvedCountChange={handleUnresolvedCountChange}
-							{startReview}
+							startReview={props.startReview}
+							acceptAll={props.acceptAll}
 						/>
 					{:else}
 						<span class="text-gray-400 italic">No text extracted</span>
