@@ -154,6 +154,61 @@ describe('OcrReviewController', () => {
 			// Should automatically open the review widget
 			expect(screen.getByRole('dialog')).toBeInTheDocument();
 		});
+
+		it('should open first unresolved item when startReview changes from false to true', async () => {
+			const { rerender } = render(OcrReviewController, {
+				props: {
+					text: 'Hello <mark>???</mark> world',
+					corrections: {},
+					onCorrectionsChange: mockOnCorrectionsChange,
+					startReview: false
+				}
+			});
+
+			// Initially no dialog
+			expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+			// Simulate prop change (like clicking Start Review button)
+			await rerender({
+				text: 'Hello <mark>???</mark> world',
+				corrections: {},
+				onCorrectionsChange: mockOnCorrectionsChange,
+				startReview: true
+			});
+
+			// Should now open the review widget
+			expect(screen.getByRole('dialog')).toBeInTheDocument();
+		});
+	});
+
+	describe('acceptAll prop', () => {
+		it('should resolve all items when acceptAll changes from false to true', async () => {
+			const { rerender } = render(OcrReviewController, {
+				props: {
+					text: 'Hello <mark>first</mark> and <mark>second</mark> world',
+					corrections: {},
+					onCorrectionsChange: mockOnCorrectionsChange,
+					acceptAll: false
+				}
+			});
+
+			// Initially no corrections made
+			expect(mockOnCorrectionsChange).not.toHaveBeenCalled();
+
+			// Simulate prop change (like clicking Accept All button)
+			await rerender({
+				text: 'Hello <mark>first</mark> and <mark>second</mark> world',
+				corrections: {},
+				onCorrectionsChange: mockOnCorrectionsChange,
+				acceptAll: true
+			});
+
+			// Should have called with all items resolved
+			expect(mockOnCorrectionsChange).toHaveBeenCalledWith({
+				'mark-0': { resolved: true, value: 'first' },
+				'mark-1': { resolved: true, value: 'second' }
+			});
+		});
 	});
 });
 
@@ -183,6 +238,35 @@ describe('OcrReviewWidget keyboard handling', () => {
 		expect(mockOnResolve).toHaveBeenCalledWith({
 			resolved: true,
 			value: 'test value'
+		});
+	});
+
+	it('should allow accepting empty text for mark type (to delete content)', async () => {
+		const user = userEvent.setup();
+		const mockOnResolve = vi.fn();
+		const mockOnSkip = vi.fn();
+
+		const { default: OcrReviewWidget } = await import('./OcrReviewWidget.svelte');
+
+		render(OcrReviewWidget, {
+			props: {
+				type: 'mark',
+				originalContent: '???',
+				onResolve: mockOnResolve,
+				onSkip: mockOnSkip
+			}
+		});
+
+		// Accept button should be enabled even with empty input
+		const acceptButton = screen.getByRole('button', { name: /accept/i });
+		expect(acceptButton).not.toBeDisabled();
+
+		// Clicking accept with empty text should work
+		await user.click(acceptButton);
+
+		expect(mockOnResolve).toHaveBeenCalledWith({
+			resolved: true,
+			value: ''
 		});
 	});
 

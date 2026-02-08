@@ -61,6 +61,20 @@
       "expected": "samples/instructions-01.md",
       "category": "typewritten",
       "notes": "Technical how-to with headers and numbered steps"
+    },
+    {
+      "id": "markup-01",
+      "image": "samples/markup-01.jpg",
+      "expected": "samples/markup-01.md",
+      "category": "typewritten",
+      "notes": "Various markups in red ink"
+    },
+    {
+      "id": "failed-01",
+      "image": "samples/failed-01.jpg",
+      "expected": "samples/failed-01.md",
+      "category": "typewritten",
+      "notes": "A cat"
     }
   ]
 }

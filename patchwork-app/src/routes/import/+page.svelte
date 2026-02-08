@@ -21,6 +21,8 @@
 
 	// Control start review for specific patch
 	let startReviewPatchId = $state<string | null>(null);
+	// Control accept all trigger
+	let acceptAllTrigger = $state(false);
 
 	// Reactive store values
 	let importStoreState = $derived($importState);
@@ -89,9 +91,12 @@
 	}
 
 	function handleAcceptAll() {
-		// This would need coordination with the patches to accept all suggestions
-		// For now, just trigger review which is more reliable
-		handleStartReview();
+		// Trigger accept all on all patches
+		acceptAllTrigger = true;
+		// Reset after a tick to allow re-triggering
+		setTimeout(() => {
+			acceptAllTrigger = false;
+		}, 100);
 	}
 
 	function handlePatchDelete(patchId: string) {
@@ -193,6 +198,7 @@
 						onUnresolvedCountChange={handleUnresolvedCountChange}
 						onDelete={handlePatchDelete}
 						startReview={startReviewPatchId === patch.id}
+						acceptAll={acceptAllTrigger}
 					/>
 				{/each}
 			</div>

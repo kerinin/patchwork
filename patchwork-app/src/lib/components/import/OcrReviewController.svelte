@@ -20,9 +20,14 @@
 		onUnresolvedCountChange?: (count: number) => void;
 		/** External trigger to start reviewing first item */
 		startReview?: boolean;
+		/** External trigger to accept all unresolved items */
+		acceptAll?: boolean;
 	}
 
-	let { text, corrections, onCorrectionsChange, onEditFullText, onUnresolvedCountChange, startReview = false }: Props = $props();
+	// Keep props object to access reactive props (startReview, acceptAll, corrections) in effects
+	const props = $props<Props>();
+	// Destructure only truly stable props (callbacks and text)
+	const { text, onCorrectionsChange, onEditFullText, onUnresolvedCountChange } = props;
 
 	let activeItemId: string | null = $state(null);
 	let activeItemType: 'mark' | 'typo' | null = $state(null);
@@ -68,7 +73,7 @@
 
 	let reviewItems = $derived(getReviewItems(text));
 	let unresolvedItems = $derived(
-		reviewItems.filter((item) => !corrections[item.id]?.resolved)
+		reviewItems.filter((item) => !props.corrections[item.id]?.resolved)
 	);
 	let hasUnresolvedItems = $derived(unresolvedItems.length > 0);
 
@@ -82,11 +87,33 @@
 	});
 
 	// Handle external start review trigger
+	// Access props.startReview directly to maintain reactivity
 	$effect(() => {
-		if (startReview && unresolvedItems.length > 0 && !activeItemId) {
+		if (props.startReview && unresolvedItems.length > 0 && !activeItemId) {
 			const firstItem = unresolvedItems[0];
 			activeItemId = firstItem.id;
 			activeItemType = firstItem.type;
+		}
+	});
+
+	// Handle external accept all trigger
+	// Access props.acceptAll directly to maintain reactivity
+	$effect(() => {
+		if (props.acceptAll && unresolvedItems.length > 0) {
+			// Build corrections for all unresolved items
+			const newCorrections = { ...props.corrections };
+			for (const item of unresolvedItems) {
+				if (item.type === 'mark') {
+					// For marks, accept with original content (keeps as-is)
+					newCorrections[item.id] = { resolved: true, value: item.content };
+				} else {
+					// For typos, accept the suggestion
+					newCorrections[item.id] = { resolved: true, accepted: true };
+				}
+			}
+			untrack(() => {
+				onCorrectionsChange(newCorrections);
+			});
 		}
 	});
 
@@ -102,7 +129,7 @@
 	function handleResolve(correction: OcrCorrection) {
 		if (!activeItemId) return;
 
-		const newCorrections = { ...corrections, [activeItemId]: correction };
+		const newCorrections = { ...props.corrections, [activeItemId]: correction };
 		onCorrectionsChange(newCorrections);
 
 		// Move to next unresolved item
@@ -175,7 +202,7 @@
 	<div class="relative whitespace-pre-wrap">
 		<OcrMarkupRenderer
 			{text}
-			{corrections}
+			corrections={props.corrections}
 			onReviewItem={handleReviewItem}
 		/>
 

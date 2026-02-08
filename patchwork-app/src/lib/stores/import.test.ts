@@ -204,5 +204,53 @@ describe('import store', () => {
 				expect.objectContaining({ status: 'needs_review' })
 			);
 		});
+
+		it('should process files added while queue is already processing', async () => {
+			// Setup: OCR takes some time to complete
+			let ocrCallCount = 0;
+			mockGetCurrentUserId.mockResolvedValue('user-123');
+			mockUploadPatchImage.mockResolvedValue('images/test.jpg');
+			mockCreatePatch.mockImplementation(() => Promise.resolve({ id: `patch-${++ocrCallCount}` }));
+			mockUpdatePatch.mockResolvedValue({});
+			mockPerformOcr.mockImplementation(
+				() =>
+					new Promise((resolve) =>
+						setTimeout(
+							() =>
+								resolve({
+									text: 'Text',
+									confidence: 0.95,
+									words: []
+								}),
+							50
+						)
+					)
+			);
+			mockNeedsReview.mockReturnValue(false);
+
+			const { importState, addFilesToQueue, processQueue } = await import('./import');
+
+			// Add first file and start processing
+			addFilesToQueue([new File(['test1'], 'test1.jpg', { type: 'image/jpeg' })]);
+			const processPromise = processQueue();
+
+			// Wait a bit for processing to start
+			await new Promise((resolve) => setTimeout(resolve, 10));
+
+			// Add second file while first is processing
+			addFilesToQueue([new File(['test2'], 'test2.jpg', { type: 'image/jpeg' })]);
+			// This should also trigger processing for the new file
+			processQueue();
+
+			// Wait for all processing to complete
+			await processPromise;
+			// Small additional wait for second file processing
+			await new Promise((resolve) => setTimeout(resolve, 100));
+
+			// Both files should be processed
+			const state = get(importState);
+			expect(state.completedCount).toBe(2);
+			expect(state.queue.filter((i) => i.status === 'complete')).toHaveLength(2);
+		});
 	});
 });
