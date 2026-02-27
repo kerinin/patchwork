@@ -209,10 +209,12 @@ export async function processQueue(concurrency = 3): Promise<void> {
  * Process a single import item through the full pipeline.
  */
 async function processItem(item: ImportItem): Promise<void> {
+	let step = 'auth';
 	try {
 		const userId = await getCurrentUserId();
 
 		// Step 1: Upload to storage
+		step = 'storage upload';
 		importState.updateItem(item.id, { status: 'uploading', progress: 10 });
 
 		const imagePath = await storage.uploadPatchImage(
@@ -222,6 +224,7 @@ async function processItem(item: ImportItem): Promise<void> {
 		);
 
 		// Step 2: Create patch record with processing status
+		step = 'create patch';
 		importState.updateItem(item.id, { status: 'processing', progress: 30 });
 
 		const patch = await patches.create({
@@ -237,6 +240,7 @@ async function processItem(item: ImportItem): Promise<void> {
 		});
 
 		// Step 3: Run OCR via OpenAI Vision API
+		step = 'OCR';
 		importState.updateItem(item.id, { progress: 50 });
 
 		const ocrResult = await performOcr(item.file);
@@ -254,6 +258,7 @@ async function processItem(item: ImportItem): Promise<void> {
 		};
 
 		// Step 5: Update patch with OCR results
+		step = 'update patch';
 		importState.updateItem(item.id, { progress: 80 });
 
 		await patches.update(patch.id, {
@@ -266,7 +271,7 @@ async function processItem(item: ImportItem): Promise<void> {
 		importState.completeItem(item.id, patch.id);
 	} catch (error) {
 		const message = error instanceof Error ? error.message : 'Unknown error';
-		importState.errorItem(item.id, message);
+		importState.errorItem(item.id, `[${step}] ${message}`);
 	}
 }
 
