@@ -11,7 +11,7 @@
  */
 
 import type { OcrResult } from '$lib/types/models';
-import { config } from '$lib/services/supabase';
+import { config, getSupabase } from '$lib/services/supabase';
 
 /**
  * OCR Configuration
@@ -115,12 +115,14 @@ export async function performOcr(
 	// Call the Edge Function
 	const functionsUrl = config.functionsUrl || 'http://127.0.0.1:54321/functions/v1';
 	const anonKey = config.supabaseAnonKey;
+	const { data: { session } } = await getSupabase().auth.getSession();
+	const accessToken = session?.access_token ?? anonKey;
 	const response = await fetch(`${functionsUrl}/ocr`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
 			apikey: anonKey,
-			Authorization: `Bearer ${anonKey}`
+			Authorization: `Bearer ${accessToken}`
 		},
 		body: JSON.stringify({
 			image: base64Image,
