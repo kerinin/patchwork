@@ -38,6 +38,18 @@
 		try {
 			// Load all patches - UI will show status and collapse resolved ones
 			allPatches = await patchesApi.list();
+
+			// Mark any stale "processing" patches as OCR_FAILED —
+			// they were interrupted by a page reload or navigation
+			const stale = allPatches.filter((p) => p.status === 'processing');
+			for (const p of stale) {
+				await patchesApi.update(p.id, {
+					status: 'needs_review',
+					extracted_text: '<!-- OCR_FAILED: Import interrupted (page was reloaded) -->'
+				});
+				p.status = 'needs_review';
+				p.extracted_text = '<!-- OCR_FAILED: Import interrupted (page was reloaded) -->';
+			}
 		} catch (e: unknown) {
 			console.error('Failed to load patches:', e);
 		}
@@ -190,7 +202,7 @@
 				<p class="mt-2 text-sm text-ink-light">Drop image files here to import pages.</p>
 			</div>
 		{:else}
-			<div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+			<div class="mx-auto grid max-w-5xl grid-cols-1 gap-6 2xl:max-w-none 2xl:grid-cols-2">
 				{#each allPatches as patch (patch.id)}
 					<PatchCard
 						{patch}
