@@ -11,7 +11,7 @@
  */
 
 import type { OcrResult } from '$lib/types/models';
-import { config, getSupabase } from '$lib/services/supabase';
+import { getSupabase } from '$lib/services/supabase';
 
 /**
  * OCR Configuration
@@ -112,30 +112,17 @@ export async function performOcr(
 
 	onProgress?.('Processing OCR...');
 
-	// Call the Edge Function
-	const functionsUrl = config.functionsUrl || 'http://127.0.0.1:54321/functions/v1';
-	const anonKey = config.supabaseAnonKey;
-	const { data: { session } } = await getSupabase().auth.getSession();
-	const accessToken = session?.access_token ?? anonKey;
-	const response = await fetch(`${functionsUrl}/ocr`, {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-			apikey: anonKey,
-			Authorization: `Bearer ${accessToken}`
-		},
-		body: JSON.stringify({
-			image: base64Image,
-			mimeType
-		})
+	// Call the Edge Function via Supabase client (handles URL + auth automatically)
+	const supabase = getSupabase();
+	const { data, error } = await supabase.functions.invoke('ocr', {
+		body: { image: base64Image, mimeType }
 	});
 
-	if (!response.ok) {
-		const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-		throw new Error(error.error || `OCR failed: ${response.status}`);
+	if (error) {
+		throw new Error(error.message || 'OCR failed');
 	}
 
-	const result = await response.json();
+	const result = data;
 
 	onProgress?.('OCR complete!');
 
