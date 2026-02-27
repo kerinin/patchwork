@@ -41,6 +41,7 @@ const backendMode = PUBLIC_BACKEND_MODE || 'local';
 
 export const config = {
 	supabaseUrl,
+	supabaseAnonKey,
 	functionsUrl,
 	backendMode,
 	isLocal: backendMode === 'local'

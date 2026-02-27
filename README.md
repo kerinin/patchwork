@@ -477,6 +477,82 @@ Every time you apply a patch, Patchwork saves a snapshot. Revert to any previous
 
 ---
 
+## Local Development Setup
+
+### Prerequisites
+
+- **Node.js 22** (Node 25 has compatibility issues with SvelteKit's virtual modules)
+- **Docker Desktop** ([download](https://www.docker.com/products/docker-desktop/))
+- **Supabase CLI** (`brew install supabase/tap/supabase`)
+- **OpenAI API key** (for OCR via GPT-4o Vision)
+
+### 1. Install dependencies
+
+```bash
+cd patchwork-app
+npm install
+```
+
+### 2. Configure environment
+
+Copy the example env file:
+
+```bash
+cp patchwork-app/.env.example patchwork-app/.env
+```
+
+The defaults are already configured for local Supabase. No changes needed.
+
+### 3. Set up OpenAI key for OCR
+
+Create `supabase/.env` (gitignored) with your OpenAI key:
+
+```
+OPENAI_API_KEY=sk-your-key-here
+```
+
+### 4. Start local Supabase
+
+Make sure Docker Desktop is running, then:
+
+```bash
+supabase start
+```
+
+This pulls Docker images on first run (may take a few minutes), runs database migrations, creates the dev user (`dev@patchwork.local` / `devpassword123`), and sets up the storage bucket.
+
+### 5. Start Edge Functions
+
+In a separate terminal:
+
+```bash
+supabase functions serve --env-file supabase/.env --no-verify-jwt
+```
+
+This serves the OCR, embedding, and suggestion functions locally.
+
+### 6. Start the dev server
+
+```bash
+cd patchwork-app
+npm run dev -- --open
+```
+
+The app opens at `http://localhost:5173` and auto-logs in with the dev user.
+
+### Local Supabase Dashboard
+
+The Supabase Studio dashboard is available at `http://127.0.0.1:54323` for inspecting the database, auth users, and storage.
+
+### Stopping
+
+```bash
+supabase stop        # Stop Supabase containers
+# Ctrl+C to stop the dev server and edge functions
+```
+
+---
+
 ## Technical Architecture
 
 Patchwork uses a cloud-synced architecture with on-device OCR. Text extraction happens locally on your device using platform APIs, while documents sync across devices via Supabase. Suggestions are generated server-side using OpenAI embeddings.

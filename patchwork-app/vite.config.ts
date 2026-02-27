@@ -14,7 +14,7 @@ export default defineConfig({
 		}
 	},
 	resolve: {
-		conditions: ['browser']
+		conditions: ['browser', 'development']
 	},
 	// Tauri expects a fixed port
 	server: {

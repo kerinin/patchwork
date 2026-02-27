@@ -11,6 +11,7 @@
  */
 
 import type { OcrResult } from '$lib/types/models';
+import { config } from '$lib/services/supabase';
 
 /**
  * OCR Configuration
@@ -112,15 +113,14 @@ export async function performOcr(
 	onProgress?.('Processing OCR...');
 
 	// Call the Edge Function
-	// Use import.meta.env for Vite compatibility in both app and tests
-	const functionsUrl =
-		import.meta.env.VITE_FUNCTIONS_URL ||
-		import.meta.env.PUBLIC_FUNCTIONS_URL ||
-		'http://127.0.0.1:54321/functions/v1';
+	const functionsUrl = config.functionsUrl || 'http://127.0.0.1:54321/functions/v1';
+	const anonKey = config.supabaseAnonKey;
 	const response = await fetch(`${functionsUrl}/ocr`, {
 		method: 'POST',
 		headers: {
-			'Content-Type': 'application/json'
+			'Content-Type': 'application/json',
+			apikey: anonKey,
+			Authorization: `Bearer ${anonKey}`
 		},
 		body: JSON.stringify({
 			image: base64Image,
