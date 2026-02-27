@@ -210,6 +210,7 @@ export async function processQueue(concurrency = 3): Promise<void> {
  */
 async function processItem(item: ImportItem): Promise<void> {
 	let step = 'auth';
+	let patchId: string | null = null;
 	try {
 		const userId = await getCurrentUserId();
 
@@ -238,6 +239,7 @@ async function processItem(item: ImportItem): Promise<void> {
 			confidence_data: { overall: 0 },
 			suggested_action: null
 		});
+		patchId = patch.id;
 
 		// Step 3: Run OCR via OpenAI Vision API
 		step = 'OCR';
@@ -272,6 +274,17 @@ async function processItem(item: ImportItem): Promise<void> {
 	} catch (error) {
 		const message = error instanceof Error ? error.message : 'Unknown error';
 		importState.errorItem(item.id, `[${step}] ${message}`);
+
+		// If the patch was already created, mark it as OCR_FAILED so the card
+		// shows the failure UI (delete / type content) instead of stuck "processing"
+		if (patchId) {
+			patches.update(patchId, {
+				status: 'needs_review' as PatchStatus,
+				extracted_text: `<!-- OCR_FAILED: ${message} -->`
+			}).catch((e) => {
+				console.error('Failed to mark patch as OCR_FAILED:', e);
+			});
+		}
 	}
 }
 
