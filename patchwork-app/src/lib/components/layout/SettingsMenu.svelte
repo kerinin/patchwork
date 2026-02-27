@@ -17,7 +17,6 @@
   async function handleSignOut() {
     const supabase = getSupabase();
     await supabase.auth.signOut();
-    window.location.reload();
   }
 
   function handleToggle() {
