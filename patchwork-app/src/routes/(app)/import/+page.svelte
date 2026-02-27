@@ -202,7 +202,7 @@
 				<p class="mt-2 text-sm text-ink-light">Drop image files here to import pages.</p>
 			</div>
 		{:else}
-			<div class="mx-auto grid max-w-5xl grid-cols-1 gap-6 2xl:max-w-none 2xl:grid-cols-2">
+			<div class="grid grid-cols-1 gap-6 2xl:grid-cols-2">
 				{#each allPatches as patch (patch.id)}
 					<PatchCard
 						{patch}
