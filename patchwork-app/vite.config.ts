@@ -1,7 +1,7 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vitest/config';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
 	plugins: [sveltekit()],
 	test: {
 		include: ['src/**/*.{test,spec}.{js,ts}'],
@@ -14,11 +14,11 @@ export default defineConfig({
 		}
 	},
 	resolve: {
-		conditions: ['browser', 'development']
+		conditions: mode === 'development' ? ['browser', 'development'] : ['browser']
 	},
 	// Tauri expects a fixed port
 	server: {
 		port: 5173,
 		strictPort: true
 	}
-});
+}));
