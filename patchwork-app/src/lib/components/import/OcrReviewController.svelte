@@ -199,14 +199,16 @@
 <svelte:window onkeydown={handleKeydown} />
 
 <div class="ocr-review-controller" bind:this={containerRef}>
-	<div class="relative whitespace-pre-wrap">
+	<div class="whitespace-pre-wrap">
 		<OcrMarkupRenderer
 			{text}
 			corrections={props.corrections}
 			onReviewItem={handleReviewItem}
 		/>
+	</div>
 
-		{#if activeItem && activeItemId}
+	{#if activeItem && activeItemId}
+		<div class="mt-2">
 			<OcrReviewWidget
 				type={activeItem.type}
 				originalContent={activeItem.content}
@@ -214,8 +216,8 @@
 				onResolve={handleResolve}
 				onSkip={handleSkip}
 			/>
-		{/if}
-	</div>
+		</div>
+	{/if}
 
 	{#if onEditFullText}
 		<div class="mt-2 text-right">
